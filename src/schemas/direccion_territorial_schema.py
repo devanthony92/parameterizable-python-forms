@@ -14,6 +14,8 @@ class DireccionTerritorialUpdate(DireccionTerritorialSchema):
 
 class DireccionTerritorialResponse(DireccionTerritorialSchema):
     id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
 class LogEntityRead(BaseModel):
     id: int
@@ -36,6 +38,6 @@ class PaginacionSchema(BaseModel):
     pages: int
 
 class DireccionTerritorialListResponse(BaseModel):
-    data: List[DireccionTerritorialSchema]
+    data: List[DireccionTerritorialResponse]
     pagination: PaginacionSchema
 

@@ -1,7 +1,12 @@
-from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, Boolean, DateTime, func,  ForeignKey, Index
+from sqlalchemy import Column, Integer, String, TIMESTAMP, Boolean, func,  ForeignKey, Index
+from sqlalchemy.orm import relationship
 from src.config.config import Base
-
-class Persona(Base):
+from src.models.audit_mixin import AuditMixin
+"""
+Modelo que representa las direcciones territoriales del sistema.
+Contiene información sobre la región, estado y trazabilidad del registro.
+"""
+class Persona(AuditMixin, Base):
     __tablename__ = "personas"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True, comment="Identificador único de la unidad ejecutora")
@@ -12,11 +17,9 @@ class Persona(Base):
     id_persona = Column(Integer, ForeignKey("personas.id"), nullable=True, comment="ID de la persona que creó o modificó el registro")
     activo = Column(Boolean, nullable=False, default=True, comment="Indica si el registro está activo (true) o inactivo (false)")
     
-    # Campos de auditoria
-    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False, comment="Fecha y hora de creación del registro")
-    updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False, comment="Fecha y hora de última actualización del registro")
-    deleted_at = Column(TIMESTAMP(timezone=True), nullable=True, comment="Fecha y hora de eliminación lógica del registro (soft delete)")
-    
+    #relaciones
+    direcciones_territoriales = relationship("DireccionTerritorial", back_populates="persona")
+
     __table_args__ = (
         Index("idx_personas_cedula", "cedula"),
         Index("idx_personas_email", "email"),
