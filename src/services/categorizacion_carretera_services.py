@@ -1,45 +1,45 @@
 from fastapi import HTTPException, Request, status
 from sqlalchemy.orm import Session
-from src.models.rutas_viales_model import RutasViales
+from src.models.categorizacion_carretera_model import CategorizacionCarretera
 from src.models.logs_model import TipoOperacionEnum
-from src.schemas.rutas_viales_schema import RutasCreate, RutasUpdate, LogEntityRead
+from src.schemas.categorizacion_carretera_schema import CategorizacionCarreteraCreate, CategorizacionCarreteraUpdate, LogEntityRead
 from datetime import datetime
 from src.utils.logs_util import registrar_log, LogUtil
 
 # Servicio para listar las unidades de ejecucion
-class RutasVialesService:
+class CategorizacionService:
     def __init__(self, db: Session):
         self.db = db
         
 # servicio para listar  los registros
-    def list_rutas(self, skip: int, limit: int):
-        return self.db.query(RutasViales).filter(RutasViales.activo == True).offset(skip).limit(limit).all()
-    def count_rutas(self):
-        return self.db.query(RutasViales).filter(RutasViales.activo == True).count()
+    def list_categorizacion(self, skip: int, limit: int):
+        return self.db.query(CategorizacionCarretera).filter(CategorizacionCarretera.activo == True).offset(skip).limit(limit).all()
+    def count_categorizacion(self):
+        return self.db.query(CategorizacionCarretera).filter(CategorizacionCarretera.activo == True).count()
     
     
     # servicio para crear un registro
-    async def create_rutas(self, payload: RutasCreate, 
+    async def create_categorizacion(self, payload: CategorizacionCarreteraCreate, 
                             request: Request, tokenpayload: dict):
-        datacreate = self.db.query(RutasViales).filter(
-            RutasViales.nombre == payload.nombre,
-                RutasViales.activo == True).first()
+        datacreate = self.db.query(CategorizacionCarretera).filter(
+            CategorizacionCarretera.nombre == payload.nombre,
+                CategorizacionCarretera.activo == True).first()
         if datacreate:
-            return HTTPException(status_code=status.HTTP_304_NOT_MODIFIED, detail="La ruta ya existe")
+            return HTTPException(status_code=status.HTTP_304_NOT_MODIFIED, detail="La categorización ya existe")
         if payload.nombre =="":
-            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El campo nombre de la ruta se encuentra vacia ingresa un dato valido")
+            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El campo nombre de la categorización se encuentra vacia ingresa un dato valido")
         if len(payload.nombre) > 255:
             return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El campo nombre no puede tener un rango mayor a 255 caracteres")
         
-        entity = RutasViales(nombre=payload.nombre, id_persona=tokenpayload.get("sub"), 
-                            codigo=payload.codigo, activo=True, created_at=datetime.utcnow())
+        entity = CategorizacionCarretera(nombre=payload.nombre, id_persona=tokenpayload.get("sub"), 
+                                        activo=True, created_at=datetime.utcnow())
         self.db.add(entity)
         self.db.commit()
         self.db.refresh(entity)
         
         # Registro de logs
         registrar_log(LogUtil(self.db),
-            tabla_afectada="rutas",
+            tabla_afectada="categorizaciones_carreteras",
             id_registro_afectado=entity.id,
             tipo_operacion=TipoOperacionEnum.INSERT.value,
             datos_nuevos=LogEntityRead.from_orm(entity).model_dump(mode="json"),
@@ -52,40 +52,40 @@ class RutasVialesService:
     
     
     
-    async def show(self, ruta_id: int):
-        entity = self.db.query(RutasViales).filter(
-            RutasViales.id == ruta_id,
-                RutasViales.activo == True).first()
+    async def show(self, categorizacion_id: int):
+        entity = self.db.query(CategorizacionCarretera).filter(
+            CategorizacionCarretera.id == categorizacion_id,
+                CategorizacionCarretera.activo == True).first()
         if not entity:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La ruta no fue hallada")
-        if ruta_id =="":
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La categorización no fue hallada")
+        if categorizacion_id =="":
             return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
-                                detail="El campo ruta_id se encuentra vacia ingresa un dato valido")
+                                detail="El campo categorizacion_id se encuentra vacia ingresa un dato valido")
         return entity
     
     # servicio para editar logicamente un registro
-    async def update_rutas(self, ruta_id: int, 
-                            payload: RutasUpdate, 
+    async def update_categorizacion(self, categorizacion_id: int, 
+                            payload: CategorizacionCarreteraUpdate, 
                             request: Request, tokenpayload: dict):
-        dataupdate = self.db.query(RutasViales).filter(
-            RutasViales.id == ruta_id,
-                RutasViales.activo == True).first()
+        dataupdate = self.db.query(CategorizacionCarretera).filter(
+            CategorizacionCarretera.id == categorizacion_id,
+                CategorizacionCarretera.activo == True).first()
         if payload.nombre:
             existe = (
-                self.db.query(RutasViales)
-                .filter(RutasViales.nombre == payload.nombre, RutasViales.id != ruta_id)
+                self.db.query(CategorizacionCarretera)
+                .filter(CategorizacionCarretera.nombre == payload.nombre, CategorizacionCarretera.id != categorizacion_id)
                 .first()
             )
             if existe:
                 return HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"El nombre '{payload.nombre}' ya está siendo usado por otra ruta."
+                    detail=f"El nombre '{payload.nombre}' ya está siendo usado por otra categorización."
                 )
         
         if not dataupdate:
-            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La ruta no fue hallada")
+            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El modo no fue hallada")
         if payload.nombre =="":
-            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El campo nombre de la ruta se encuentra vacia ingresa un dato valido")
+            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El campo nombre de la categorización se encuentra vacia ingresa un dato valido")
         if len(payload.nombre) > 255:
             return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El campo nombre no puede tener un rango mayor a 255 caracteres")
             
@@ -93,7 +93,6 @@ class RutasVialesService:
 
         if dataupdate:
             dataupdate.nombre = payload.nombre
-            dataupdate.codigo = payload.codigo
             dataupdate.id_persona = tokenpayload.get("sub")
             dataupdate.updated_at = datetime.utcnow()
             self.db.commit()
@@ -101,7 +100,7 @@ class RutasVialesService:
             
             # Registro de logs
         registrar_log(LogUtil(self.db),
-            tabla_afectada="rutas",
+            tabla_afectada="categorizaciones_carreteras",
             id_registro_afectado=dataupdate.id,
             tipo_operacion=TipoOperacionEnum.UPDATE.value,
             datos_nuevos=LogEntityRead.from_orm(dataupdate).model_dump(mode="json"),
@@ -114,12 +113,12 @@ class RutasVialesService:
     
     
     # servicio para eliminar logicamente un registro
-    async def delete_ruta(self, ruta_id: int, request: Request, tokenpayload: dict):
-        datadelete = self.db.query(RutasViales).filter(
-            RutasViales.id == ruta_id,
-                RutasViales.activo == True).first()
+    async def delete_categorizacion(self, categorizacion_id: int, request: Request, tokenpayload: dict):
+        datadelete = self.db.query(CategorizacionCarretera).filter(
+            CategorizacionCarretera.id == categorizacion_id,
+                CategorizacionCarretera.activo == True).first()
         if not datadelete:
-            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La ruta no fue hallada")
+            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El modo no fue hallada")
         
         datos_viejos = LogEntityRead.from_orm(datadelete).model_dump(mode="json")
     # le paso un valor false para realizar un sofdelete para un eliminado logico
@@ -132,7 +131,7 @@ class RutasVialesService:
         
         
         registrar_log(LogUtil(self.db),
-            tabla_afectada="rutas",
+            tabla_afectada="categorizaciones_carreteras",
             id_registro_afectado=datadelete.id,
             tipo_operacion=TipoOperacionEnum.DELETE.value,
             datos_nuevos=LogEntityRead.from_orm(datadelete).model_dump(mode="json"),

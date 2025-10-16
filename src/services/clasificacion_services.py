@@ -1,8 +1,8 @@
 from fastapi import HTTPException, Request, status
 from sqlalchemy.orm import Session
-from src.models.clasificaciones_proyecto_model import ClasificacionesProyecto
+from src.models.clasificacion_proyecto_model import ClasificacionProyecto
 from src.models.logs_model import TipoOperacionEnum
-from src.schemas.clasificacion_proyecto_schema import ClasificacionProyectoCreate, LogEntityRead
+from src.schemas.clasificacion_proyecto_schema import ClasificacionProyectoCreate,ClasificacionProyectoUpdate, LogEntityRead
 from datetime import datetime
 from src.utils.logs_util import registrar_log, LogUtil
 
@@ -13,17 +13,17 @@ class clasificacionService:
         
 # servicio para listar  los registros
     def list_clasificacion_proyecto(self, skip: int, limit: int):
-        return self.db.query(ClasificacionesProyecto).filter(ClasificacionesProyecto.activo == True).offset(skip).limit(limit).all()
+        return self.db.query(ClasificacionProyecto).filter(ClasificacionProyecto.activo == True).offset(skip).limit(limit).all()
     def count_clasificacion_proyecto(self):
-        return self.db.query(ClasificacionesProyecto).filter(ClasificacionesProyecto.activo == True).count()
+        return self.db.query(ClasificacionProyecto).filter(ClasificacionProyecto.activo == True).count()
     
     
     # servicio para crear un registro
     async def create_clacificacion_proyecto(self, payload: ClasificacionProyectoCreate, 
                             request: Request, tokenpayload: dict):
-        datacreate = self.db.query(ClasificacionesProyecto).filter(
-            ClasificacionesProyecto.nombre == payload.nombre,
-                ClasificacionesProyecto.activo == True).first()
+        datacreate = self.db.query(ClasificacionProyecto).filter(
+            ClasificacionProyecto.nombre == payload.nombre,
+                ClasificacionProyecto.activo == True).first()
         if datacreate:
             return HTTPException(status_code=status.HTTP_304_NOT_MODIFIED, detail="La clasificación ya existe")
         if payload.nombre =="":
@@ -31,7 +31,7 @@ class clasificacionService:
         if len(payload.nombre) > 255:
             return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El campo nombre no puede tener un rango mayor a 255 caracteres")
         
-        entity = ClasificacionesProyecto(nombre=payload.nombre, id_persona=tokenpayload.get("sub"), 
+        entity = ClasificacionProyecto(nombre=payload.nombre, id_persona=tokenpayload.get("sub"), 
                                         activo=True, created_at=datetime.utcnow())
         self.db.add(entity)
         self.db.commit()
@@ -53,9 +53,9 @@ class clasificacionService:
     
     
     async def show(self, clasificacion_id: int):
-        entity = self.db.query(ClasificacionesProyecto).filter(
-            ClasificacionesProyecto.id == clasificacion_id,
-                ClasificacionesProyecto.activo == True).first()
+        entity = self.db.query(ClasificacionProyecto).filter(
+            ClasificacionProyecto.id == clasificacion_id,
+                ClasificacionProyecto.activo == True).first()
         if not entity:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La clasificación no fue hallada")
         if clasificacion_id =="":
@@ -65,15 +65,15 @@ class clasificacionService:
     
     # servicio para editar logicamente un registro
     async def update_clasificacion_pryecto(self, clasificacion_id: int, 
-                            payload: ClasificacionProyectoCreate, 
+                            payload: ClasificacionProyectoUpdate, 
                             request: Request, tokenpayload: dict):
-        dataupdate = self.db.query(ClasificacionesProyecto).filter(
-            ClasificacionesProyecto.id == clasificacion_id,
-                ClasificacionesProyecto.activo == True).first()
+        dataupdate = self.db.query(ClasificacionProyecto).filter(
+            ClasificacionProyecto.id == clasificacion_id,
+                ClasificacionProyecto.activo == True).first()
         if payload.nombre:
             existe = (
-                self.db.query(ClasificacionesProyecto)
-                .filter(ClasificacionesProyecto.nombre == payload.nombre, ClasificacionesProyecto.id != clasificacion_id)
+                self.db.query(ClasificacionProyecto)
+                .filter(ClasificacionProyecto.nombre == payload.nombre, ClasificacionProyecto.id != clasificacion_id)
                 .first()
             )
             if existe:
@@ -114,9 +114,9 @@ class clasificacionService:
     
     # servicio para eliminar logicamente un registro
     async def delete_clasificacion(self, clasificacion_id: int, request: Request, tokenpayload: dict):
-        datadelete = self.db.query(ClasificacionesProyecto).filter(
-            ClasificacionesProyecto.id == clasificacion_id,
-                ClasificacionesProyecto.activo == True).first()
+        datadelete = self.db.query(ClasificacionProyecto).filter(
+            ClasificacionProyecto.id == clasificacion_id,
+                ClasificacionProyecto.activo == True).first()
         if not datadelete:
             return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La clasificacion no fue hallada")
         

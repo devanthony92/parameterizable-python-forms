@@ -1,8 +1,8 @@
 from fastapi import HTTPException, Request, status
 from sqlalchemy.orm import Session
-from src.models.tramos_sectores_model import TramoSectores
+from src.models.tramo_sector import TramoSector
 from src.models.logs_model import TipoOperacionEnum
-from src.schemas.tramos_sectores_schema import TramoCreate, TramoUpdate, LogEntityRead
+from src.schemas.tramo_sector_schema import TramoSectorCreate, TramoSectorUpdate, LogEntityRead
 from datetime import datetime
 from src.utils.logs_util import registrar_log, LogUtil
 
@@ -13,17 +13,17 @@ class TramoService:
         
 # servicio para listar  los registros
     def list_tramo(self, skip: int, limit: int):
-        return self.db.query(TramoSectores).filter(TramoSectores.activo == True).offset(skip).limit(limit).all()
+        return self.db.query(TramoSector).filter(TramoSector.activo == True).offset(skip).limit(limit).all()
     def count_tramo(self):
-        return self.db.query(TramoSectores).filter(TramoSectores.activo == True).count()
+        return self.db.query(TramoSector).filter(TramoSector.activo == True).count()
     
     
     # servicio para crear un registro
-    async def create_tramo(self, payload: TramoCreate, 
+    async def create_tramo(self, payload: TramoSectorCreate, 
                             request: Request, tokenpayload: dict):
-        datacreate = self.db.query(TramoSectores).filter(
-            TramoSectores.nombre == payload.nombre,
-                TramoSectores.activo == True).first()
+        datacreate = self.db.query(TramoSector).filter(
+            TramoSector.nombre == payload.nombre,
+                TramoSector.activo == True).first()
         if datacreate:
             return HTTPException(status_code=status.HTTP_304_NOT_MODIFIED, detail="El tramo ya existe")
         if payload.nombre =="":
@@ -31,7 +31,7 @@ class TramoService:
         if len(payload.nombre) > 255:
             return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El campo nombre no puede tener un rango mayor a 255 caracteres")
         
-        entity = TramoSectores(**payload.model_dump())
+        entity = TramoSector(**payload.model_dump())
         entity.id_persona=tokenpayload.get("sub")
         entity.activo=True
         entity.created_at=datetime.utcnow()
@@ -55,9 +55,9 @@ class TramoService:
     
     
     async def show(self, tramo_id: int):
-        entity = self.db.query(TramoSectores).filter(
-            TramoSectores.id == tramo_id,
-                TramoSectores.activo == True).first()
+        entity = self.db.query(TramoSector).filter(
+            TramoSector.id == tramo_id,
+                TramoSector.activo == True).first()
         if not entity:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El modo no fue hallada")
         if tramo_id =="":
@@ -67,21 +67,21 @@ class TramoService:
     
     # servicio para editar logicamente un registro
     async def update_tramo(self, tramo_id: int, 
-                            payload: TramoUpdate, 
+                            payload: TramoSectorUpdate, 
                             request: Request, tokenpayload: dict):
-        dataupdate = self.db.query(TramoSectores).filter(
-            TramoSectores.id == tramo_id,
-                TramoSectores.activo == True).first()
+        dataupdate = self.db.query(TramoSector).filter(
+            TramoSector.id == tramo_id,
+                TramoSector.activo == True).first()
         if payload.nombre:
             existe = (
-                self.db.query(TramoSectores)
-                .filter(TramoSectores.nombre == payload.nombre, TramoSectores.id != tramo_id)
+                self.db.query(TramoSector)
+                .filter(TramoSector.nombre == payload.nombre, TramoSector.id != tramo_id)
                 .first()
             )
             if existe:
                 return HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"El nombre '{payload.nombre}' ya está siendo usado por otro modo."
+                    detail=f"El nombre '{payload.nombre}' ya está siendo usado por otro ModoTransporte."
                 )
         
         if not dataupdate:
@@ -121,9 +121,9 @@ class TramoService:
     
     # servicio para eliminar logicamente un registro
     async def delete_tramo(self, tramo_id: int, request: Request, tokenpayload: dict):
-        datadelete = self.db.query(TramoSectores).filter(
-            TramoSectores.id == tramo_id,
-                TramoSectores.activo == True).first()
+        datadelete = self.db.query(TramoSector).filter(
+            TramoSector.id == tramo_id,
+                TramoSector.activo == True).first()
         if not datadelete:
             return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El tramo no fue hallada")
         

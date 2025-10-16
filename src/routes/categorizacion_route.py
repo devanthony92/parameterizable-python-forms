@@ -3,17 +3,17 @@ from sqlalchemy.orm import Session
 from typing import Dict, Any
 
 from src.config.config import get_session
-from src.services.categorizacion_services import CategorizacionService
-from src.schemas.categorizacion_schema import (categorizacionListResponse, 
-                                                categorizacionCreate,
-                                                categorizacionUpdate)
+from src.services.categorizacion_carretera_services import CategorizacionService
+from src.schemas.categorizacion_carretera_schema import (CategorizacionCarreteraListResponse,
+                                                         CategorizacionCarreteraCreate,
+                                                         CategorizacionCarreteraUpdate)
 from src.utils.jwt_validator_util import verify_jwt_token
 
 # inicializacion del roter
 router = APIRouter()
 
 # endpoint de listar data con paginacion incluida
-@router.get("/", response_model=categorizacionListResponse)
+@router.get("/", response_model=CategorizacionCarreteraListResponse)
 def lista(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
@@ -38,7 +38,7 @@ def lista(
     # endpoin de crear registro
 @router.post("/")
 async def creates(request: Request, 
-                        payload: categorizacionCreate, 
+                        payload: CategorizacionCarreteraCreate, 
                         # de esta manera llamo todas las bases de datos existentes
                         dbs: list[Session] = Depends(lambda: next(get_session())),
                         tokenpayload: dict = Depends(verify_jwt_token)):
@@ -66,7 +66,7 @@ async def get_show(categorizacion_id: int, db: Session = Depends(lambda: next(ge
 @router.put("/{categorizacion_id}")
 async def update(request: Request, 
                         categorizacion_id: int,
-                        payload: categorizacionUpdate,
+                        payload: CategorizacionCarreteraUpdate,
                         # de esta manera llamo todas las bases de datos existentes
                         dbs: list[Session] = Depends(lambda: next(get_session())),
                         tokenpayload: dict = Depends(verify_jwt_token)):

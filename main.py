@@ -4,21 +4,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from scalar_fastapi import get_scalar_api_reference
 
 from src.config.config import Base, engine
-from src.routes import direccion_territorial_route, contrato_route, proyecto_route
 
 # directorios de rutas
 from src.routes import (
+    contrato_route,
+    proyecto_route,
+    tramo_sector_route,
+    ruta_route,
+    funcionalidad_carretera_route,
+    clasificacion_proyecto_route,
     categorizacion_route,
-    clasificaciones_proyecto_route,
     departamento_route,
     direccion_territorial_route,
-    funcionalidades_carreteras_route,
     modo_route,
     municipio_route,
     profesion_route,
-    rutas_viales_route,
-    tipos_proyectos_route,
-    tramo_route,
+    tipo_proyecto_route,
     unidad_ejecutora_route,
 )
 
@@ -75,27 +76,27 @@ app.include_router(
     tags=["Direccion territorial"],
 )
 app.include_router(
-    tipos_proyectos_route.router, prefix="/tipos_proyectos", tags=["Tipos de proyectos"]
+    tipo_proyecto_route.router, prefix="/tipos_proyectos", tags=["Tipos de proyectos"]
 )
 
-app.include_router(tramo_route.router, prefix="/tramos", tags=["Tramos"])
+app.include_router(tramo_sector_route.router, prefix="/tramos", tags=["Tramos"])
 app.include_router(
     categorizacion_route.router, prefix="/categorizacion", tags=["Categorización"]
 )
 app.include_router(
-    rutas_viales_route.router, prefix="/rutas_viales", tags=["Rutas viales"]
+    ruta_route.router, prefix="/rutas_viales", tags=["Rutas viales"]
 )
 
 app.include_router(
     unidad_ejecutora_route.router, prefix="/unidad_ejecutora", tags=["Unidad ejecutora"]
 )
 app.include_router(
-    clasificaciones_proyecto_route.router,
+    clasificacion_proyecto_route.router,
     prefix="/clasificaciones_proyecto",
     tags=["Clasificacion proyectos"],
 )
 app.include_router(
-    funcionalidades_carreteras_route.router,
+    funcionalidad_carretera_route.router,
     prefix="/funcionalidades_carreteras",
     tags=["Funcionalidades carretera"],
 )

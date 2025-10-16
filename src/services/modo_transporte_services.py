@@ -1,8 +1,8 @@
 from fastapi import HTTPException, Request, status
 from sqlalchemy.orm import Session
-from src.models.modo_model import Modo
+from src.models.modo_transporte_model import ModoTransporte
 from src.models.logs_model import TipoOperacionEnum
-from src.schemas.modo_schema import ModoCreate, ModoUpdate, LogEntityRead
+from src.schemas.modo_transporte_schema import ModoTransporteCreate, ModoTransporteUpdate, LogEntityRead
 from datetime import datetime
 from src.utils.logs_util import registrar_log, LogUtil
 
@@ -13,17 +13,17 @@ class ModoService:
         
 # servicio para listar  los registros
     def list_modo(self, skip: int, limit: int):
-        return self.db.query(Modo).filter(Modo.activo == True).offset(skip).limit(limit).all()
+        return self.db.query(ModoTransporte).filter(ModoTransporte.activo == True).offset(skip).limit(limit).all()
     def count_modo(self):
-        return self.db.query(Modo).filter(Modo.activo == True).count()
+        return self.db.query(ModoTransporte).filter(ModoTransporte.activo == True).count()
     
     
     # servicio para crear un registro
-    async def create_modo(self, payload: ModoCreate, 
+    async def create_modo(self, payload: ModoTransporteCreate, 
                             request: Request, tokenpayload: dict):
-        datacreate = self.db.query(Modo).filter(
-            Modo.nombre == payload.nombre,
-                Modo.activo == True).first()
+        datacreate = self.db.query(ModoTransporte).filter(
+            ModoTransporte.nombre == payload.nombre,
+                ModoTransporte.activo == True).first()
         if datacreate:
             return HTTPException(status_code=status.HTTP_304_NOT_MODIFIED, detail="El modo ya existe")
         if payload.nombre =="":
@@ -53,9 +53,9 @@ class ModoService:
     
     
     async def show(self, modo_id: int):
-        entity = self.db.query(Modo).filter(
-            Modo.id == modo_id,
-                Modo.activo == True).first()
+        entity = self.db.query(ModoTransporte).filter(
+            ModoTransporte.id == modo_id,
+                ModoTransporte.activo == True).first()
         if not entity:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El modo no fue hallada")
         if modo_id =="":
@@ -65,21 +65,21 @@ class ModoService:
     
     # servicio para editar logicamente un registro
     async def update_modo(self, modo_id: int, 
-                            payload: ModoUpdate, 
+                            payload: ModoTransporteUpdate, 
                             request: Request, tokenpayload: dict):
-        dataupdate = self.db.query(Modo).filter(
-            Modo.id == modo_id,
-                Modo.activo == True).first()
+        dataupdate = self.db.query(ModoTransporte).filter(
+            ModoTransporte.id == modo_id,
+                ModoTransporte.activo == True).first()
         if payload.nombre:
             existe = (
-                self.db.query(Modo)
-                .filter(Modo.nombre == payload.nombre, Modo.id != modo_id)
+                self.db.query(ModoTransporte)
+                .filter(ModoTransporte.nombre == payload.nombre, ModoTransporte.id != modo_id)
                 .first()
             )
             if existe:
                 return HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"El nombre '{payload.nombre}' ya está siendo usado por otro modo."
+                    detail=f"El nombre '{payload.nombre}' ya está siendo usado por otro ModoTransporte."
                 )
         
         if not dataupdate:
@@ -114,9 +114,9 @@ class ModoService:
     
     # servicio para eliminar logicamente un registro
     async def delete_modo(self, modo_id: int, request: Request, tokenpayload: dict):
-        datadelete = self.db.query(Modo).filter(
-            Modo.id == modo_id,
-                Modo.activo == True).first()
+        datadelete = self.db.query(ModoTransporte).filter(
+            ModoTransporte.id == modo_id,
+                ModoTransporte.activo == True).first()
         if not datadelete:
             return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El modo no fue hallada")
         
