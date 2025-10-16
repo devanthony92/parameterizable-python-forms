@@ -62,7 +62,12 @@ class ProyectoService:
         return LogEntityRead.from_orm(entity)
 
     async def read_proyecto(self, id: int):
+        if id is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="El campo id de la unidad ejecutora se encuentra vacío; ingresa un dato válido")
+
         entity = self.get({"id": id}, is_active=True)
+        print(entity)
         if not entity:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                                 detail="El proyecto no fue hallado")

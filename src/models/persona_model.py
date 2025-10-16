@@ -20,7 +20,20 @@ class Persona(AuditMixin, Base):
         
     #relaciones
     creado_por = relationship("Persona", remote_side=[id], backref="personas_creadas")
+    # Relaciones inversas
     direcciones_territoriales = relationship("DireccionTerritorial", back_populates="persona")
+    unidades_ejecutoras = relationship("UnidadEjecutora", back_populates="persona")
+    tipos_proyecto = relationship("TipoProyecto", back_populates="persona")
+    rutas = relationship("Ruta", back_populates="persona")
+    tramos_sectores = relationship("TramoSector", back_populates="persona")
+    clasificaciones_proyecto = relationship("ClasificacionProyecto", back_populates="persona")
+    modos_transporte = relationship("ModoTransporte", back_populates="persona")
+    funcionalidades_carreteras = relationship("FuncionalidadCarretera", back_populates="persona")
+    categorizaciones_carreteras = relationship("CategorizacionCarretera", back_populates="persona")
+    proyectos = relationship("Proyecto", back_populates="persona")
+    contratos = relationship("Contrato", back_populates="persona")
+    direcciones_territoriales = relationship("DireccionTerritorial", back_populates="persona")
+    proyectos = relationship("Proyecto", back_populates="persona")
 
     __table_args__ = (
         Index("idx_personas_cedula", "cedula",unique=True),

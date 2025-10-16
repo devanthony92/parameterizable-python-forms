@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, Index
+from sqlalchemy.orm import relationship
 from src.config.config import Base
 from src.models.audit_mixin import AuditMixin
 
@@ -12,6 +13,10 @@ class TipoProyecto(AuditMixin, Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True, comment="Identificador único del tipo de proyecto")
     nombre = Column(String(50), unique=True, nullable=False, comment="Tipo de proyecto: Licenciado o No licenciado")
     requiere_licencia = Column(Boolean, nullable=False, default=False, comment="Indica si el tipo requiere licencia ambiental")
+
+    # Relaciones
+    persona = relationship("Persona", back_populates="tipos_proyecto")
+    proyectos = relationship("Proyecto", back_populates="tipo_proyecto")
 
     __table_args__ = (
         Index("idx_tipos_proyecto_nombre", "nombre"),

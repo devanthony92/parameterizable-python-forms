@@ -14,8 +14,9 @@ class DireccionTerritorial(AuditMixin, Base):
     nombre = Column(String(255), unique=True, nullable=False, comment="Nombre de la dirección territorial")
     region = Column(String(100), nullable=True, comment="Región geográfica a la que pertenece")
         
-    #relacion con la tabla Persona
+    # Relaciones ORM
     persona = relationship("Persona", back_populates="direcciones_territoriales")
+    proyectos = relationship("Proyecto", back_populates="direccion_territorial")
 
     def __repr__(self):
         return f"<DireccionTerritorial(id={self.id}, nombre='{self.nombre}', activo={self.activo})>"

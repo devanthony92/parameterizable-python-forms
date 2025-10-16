@@ -28,7 +28,8 @@ class Contrato(AuditMixin, Base):
     recursos_sostenibilidad = Column(DECIMAL(18, 2), nullable=True, comment="Recursos asignados para sostenibilidad")
 
     # Relación con proyecto (si existe el modelo Proyecto)
-    proyecto = relationship("Proyecto", back_populates="contratos", lazy="joined", uselist=False)
+    proyecto = relationship("Proyecto", back_populates="contratos")
+    persona = relationship("Persona", back_populates="contratos")
     
     __table_args__ = (
         Index("idx_contratos_id_proyecto", "id_proyecto"),

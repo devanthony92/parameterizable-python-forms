@@ -34,7 +34,6 @@ def listar_proyectos(skip: int = Query(0, ge=0), limit: int = Query(50, ge=1, le
         },
     }
 
-
 # Crear nuevo proyecto
 @router.post("/", response_model=LogEntityRead, summary="Crear un nuevo proyecto")
 async def create_proyecto(request: Request, payload: ProyectoCreate,
@@ -52,7 +51,7 @@ async def create_proyecto(request: Request, payload: ProyectoCreate,
 
 # Obtener un proyecto por su ID
 @router.get("/{id}", response_model=ProyectoResponse, summary="Obtener un proyecto por ID")
-async def read_proyecto(id: int, db: Session = Depends(get_session), 
+async def read_proyecto(id: int, db: Session = Depends(lambda: next(get_session(0))),
                         tokenpayload: dict = Depends(verify_jwt_token)):
     return await ProyectoService(db).read_proyecto(id)
 
