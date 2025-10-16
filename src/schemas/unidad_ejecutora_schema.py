@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from datetime import datetime
+from src.models.audit_mixin import AuditMixin
 
 class UnidadEjecutoraSchema(BaseModel):
     nombre: str
@@ -15,16 +16,10 @@ class UnidadEjecutoraUpdate(UnidadEjecutoraSchema):
 class UnidadEjecutoraResponse(UnidadEjecutoraSchema):
     id: int
 
-class LogEntityRead(BaseModel):
+class LogEntityRead(AuditMixin, BaseModel):
     id: int
     nombre: str
     descripcion: Optional[str]
-    id_persona: int
-    activo: bool
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    deleted_at: Optional[datetime] = None
-
 
     model_config = ConfigDict(from_attributes=True)
 

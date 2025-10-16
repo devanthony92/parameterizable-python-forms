@@ -38,15 +38,7 @@ class DireccionTerritorialService:
 
     async def create_direccion_territorial(self, payload: DireccionTerritorialCreate,
                                            request: Request, tokenpayload: dict):
-        
-        #validamos que los datos ingresados no esten vacios
-        if payload.nombre is None or payload.nombre.strip() == "":
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail="El campo nombre de la unidad ejecutora se encuentra vacío; ingresa un dato válido")
-        if len(payload.nombre) > 255:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail="El campo nombre no puede tener un rango mayor a 255 caracteres")
-        
+
         #validamos que no exista un registro con el misno nombre
         existing = self.get({"nombre" : payload.nombre})
         if existing:
@@ -95,36 +87,28 @@ class DireccionTerritorialService:
 
     async def update_direccion_territorial(self, id: int, payload: DireccionTerritorialUpdate, 
                                            request: Request, tokenpayload: dict): 
-        if payload.nombre is not None:
-            nombre_str = payload.nombre.strip()
-            if nombre_str == "":
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                    detail="El campo nombre de la Direccion Territorial se encuentra vacío; ingresa un dato válido")
-            if len(nombre_str) > 255:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                    detail="El campo nombre no puede tener un rango mayor a 255 caracteres")
-
-            #validamos que el nombre no este previamente registrado en el sistema
-            existe = self.db.query(DireccionTerritorial).filter(
-                DireccionTerritorial.nombre == nombre_str,
-                DireccionTerritorial.id != id,
-                DireccionTerritorial.deleted_at.is_(None)
-            ).first()
-            if existe:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                    detail=f"El nombre '{nombre_str}' ya está siendo usado en otra Direccion Territorial.")
-
+        
+        #validamos que el nombre no este previamente registrado en el sistema
+        existe = self.db.query(DireccionTerritorial).filter(
+            DireccionTerritorial.nombre == payload.nombre,
+            DireccionTerritorial.id != id,
+            DireccionTerritorial.deleted_at.is_(None)
+        ).first()
+        if existe:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"El nombre '{payload.nombre}' ya está siendo usado en otra Direccion Territorial.")
 
         dataUpdate = self.get({"id": id}, is_active = True)
         if not dataUpdate:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La Direccion Territorial no fue hallada")
         
         dataOld = LogEntityRead.from_orm(dataUpdate).model_dump(mode="json")
-    
-        dataUpdate.nombre = payload.nombre.strip()
-        dataUpdate.region = payload.region
+
+        for field, value in payload.model_dump(exclude_unset=True).items():
+            setattr(dataUpdate, field, value)
+
         dataUpdate.id_persona = tokenpayload.get("sub")
-        
+        print(dataUpdate)
         try:
             self.db.add(dataUpdate)
             self.db.commit()

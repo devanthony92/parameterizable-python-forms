@@ -30,9 +30,8 @@ class ContratoService:
         return self._base_query().filter(Contrato.activo == True).count()
 
     async def create_contrato(self, payload: ContratoCreate, request: Request, tokenpayload: dict):
-        if not payload.numero_contrato or payload.numero_contrato.strip() == "":
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El número de contrato no puede estar vacío")
 
+        #validamos que el numero del contrato no este previamente registrado en el sistema
         existing = self.get({"numero_contrato": payload.numero_contrato})
         if existing:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Ya existe un contrato con ese número")
@@ -79,24 +78,16 @@ class ContratoService:
         return entity
 
     async def update_contrato(self, id: int, payload: ContratoUpdate, request: Request, tokenpayload: dict):
-        if payload.numero_contrato is not None:
-            numero_contrato_str = payload.numero_contrato.strip()
-            if numero_contrato_str == "":
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                    detail="El campo numero de contrato se encuentra vacío; ingresa un dato válido")
-            if len(numero_contrato_str) > 255:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                    detail="El campo numero de contrato no puede tener un rango mayor a 255 caracteres")
 
-            #validamos que el nombre no este previamente registrado en el sistema
-            existe = self.db.query(Contrato).filter(
-                Contrato.numero_contrato == numero_contrato_str,
-                Contrato.id != id,
-                Contrato.deleted_at.is_(None)
-            ).first()
-            if existe:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                    detail=f"El numero de contrato '{numero_contrato_str}' ya está siendo usado")
+        #validamos que el numero del contrato no este previamente registrado en el sistema
+        existe = self.db.query(Contrato).filter(
+            Contrato.numero_contrato == payload.numero_contrato.strip(),
+            Contrato.id != id,
+            Contrato.deleted_at.is_(None)
+        ).first()
+        if existe:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"El numero de contrato '{payload.numero_contrato.strip()}' ya está siendo usado")
         
         data = self.get({"id": id}, is_active=True)
         if not data:
@@ -108,7 +99,7 @@ class ContratoService:
             setattr(data, field, value)
 
         data.id_persona = tokenpayload.get("sub")
-        data.updated_at = datetime.now(timezone.utc)
+        
 
         try:
             self.db.add(data)

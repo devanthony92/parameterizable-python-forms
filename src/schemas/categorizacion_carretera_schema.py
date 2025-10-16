@@ -2,6 +2,7 @@
 from pydantic import BaseModel, ConfigDict, constr
 from typing import List, Optional
 from datetime import datetime
+from src.models.audit_mixin import AuditMixin
 
 class CategorizacionCarreteraBase(BaseModel):
     nombre: constr(min_length=1, max_length=100)
@@ -23,14 +24,9 @@ class CategorizacionCarreteraResponse(CategorizacionCarreteraBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-class LogEntityRead(BaseModel):
+class LogEntityRead(AuditMixin, BaseModel):
     id: int
     nombre: str
-    id_persona: Optional[int]
-    activo: bool
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    deleted_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -1,7 +1,8 @@
-from pydantic import BaseModel, ConfigDict, constr
+from pydantic import BaseModel, ConfigDict, constr, field_validator
 from typing import Optional, List
 from datetime import date, datetime
 from src.schemas.contrato_schema import ContratoResponse
+from src.models.audit_mixin import AuditMixin
 
 class ProyectoBase(BaseModel):
     id_unidad_ejecutora: Optional[int] = None
@@ -22,11 +23,29 @@ class ProyectoBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class ProyectoCreate(ProyectoBase):
-    pass
+
+    @field_validator(
+        "id_unidad_ejecutora", "id_direccion_territorial", "id_tipo_proyecto",
+        "id_ruta", "id_tramo_sector", "id_clasificacion", "id_modo_transporte",
+        "id_funcionalidad", "id_categorizacion"
+    )
+    def ids_mayores_que_cero(cls, v, info):
+        if v <= 0:
+            raise ValueError(f"El campo '{info.field_name}' debe ser mayor que cero")
+        return v
 
 class ProyectoUpdate(ProyectoBase):
     es_convenio_interadministrativo: Optional[bool] = None
     
+    @field_validator(
+        "id_unidad_ejecutora", "id_direccion_territorial", "id_tipo_proyecto",
+        "id_ruta", "id_tramo_sector", "id_clasificacion", "id_modo_transporte",
+        "id_funcionalidad", "id_categorizacion"
+    )
+    def ids_mayores_que_cero(cls, v, info):
+        if v <= 0:
+            raise ValueError(f"El campo '{info.field_name}' debe ser mayor que cero")
+        return v
     
 class ProyectoResponse(ProyectoBase):
     id: int
@@ -36,7 +55,7 @@ class ProyectoResponse(ProyectoBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-class LogEntityRead(BaseModel):
+class LogEntityRead(AuditMixin, BaseModel):
     id: int
     id_unidad_ejecutora: Optional[int]
     id_direccion_territorial: Optional[int]
@@ -52,13 +71,9 @@ class LogEntityRead(BaseModel):
     fecha_resolucion: Optional[date]
     es_convenio_interadministrativo: Optional[bool]
     numero_convenio: Optional[str]
-    id_persona: Optional[int]
-    activo: bool
-    created_at: datetime
-    updated_at: Optional[datetime]
-    deleted_at: Optional[datetime]
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class PaginacionSchema(BaseModel):
     skip: int

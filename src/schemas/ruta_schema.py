@@ -2,6 +2,7 @@
 from pydantic import BaseModel, ConfigDict, constr
 from typing import List, Optional
 from datetime import datetime
+from src.models.audit_mixin import AuditMixin
 
 class RutaBase(BaseModel):
     nombre: constr(min_length=1, max_length=255)
@@ -25,15 +26,10 @@ class RutaResponse(RutaBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-class LogEntityRead(BaseModel):
+class LogEntityRead(AuditMixin, BaseModel):
     id: int
     nombre: str
     codigo: Optional[str]
-    id_persona: Optional[int]
-    activo: bool
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    deleted_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 

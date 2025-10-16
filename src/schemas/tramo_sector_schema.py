@@ -2,6 +2,7 @@
 from pydantic import BaseModel, ConfigDict, constr, condecimal
 from typing import List, Optional
 from datetime import datetime
+from src.models.audit_mixin import AuditMixin
 
 class TramoSectorBase(BaseModel):
     id_ruta: Optional[int] = None
@@ -29,17 +30,12 @@ class TramoSectorResponse(TramoSectorBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-class LogEntityRead(BaseModel):
+class LogEntityRead(AuditMixin, BaseModel):
     id: int
     id_ruta: Optional[int]
     nombre: str
     kilometraje_inicial: Optional[float]
     kilometraje_final: Optional[float]
-    id_persona: Optional[int]
-    activo: bool
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    deleted_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
