@@ -48,14 +48,19 @@ async def create_direcciones_territoriales(request: Request, payload: DireccionT
         result = await DireccionTerritorialService(db).create_direccion_territorial(payload, request, tokenpayload)
         data.append(result)
 
-    #return {"data": data[0]}
-    return data[0]
+    return data[0]      #{"data": data[0]}
 
 # endpoint para buscar registro por ID
 @router.get("/{id}", response_model = DireccionTerritorialResponse)
 async def read_direcciones_territoriales(id: int, tokenpayload: dict = Depends(verify_jwt_token),
-                                         db: Session = Depends(lambda: next(get_session(0)))):
-    return await DireccionTerritorialService(db).read_direccion_territorial(id)
+                                         dbs: Session = Depends(lambda: next(get_session(0)))):
+    
+    data = []
+    for db in dbs:
+        result = await DireccionTerritorialService(db).read_direccion_territorial(id)
+        data.append(result)
+
+    return data[0]      #{"data": data[0]}
 
 # endpoint para actualizar los datos de un registro
 @router.put("/{id}", response_model=LogEntityRead, summary="Actualizar una dirección territorial")
@@ -70,7 +75,7 @@ async def update_direcciones_territoriales(id: int, request: Request, payload: D
         result = await DireccionTerritorialService(db).update_direccion_territorial(id, payload, request, tokenpayload)
         data.append(result)
 
-    return {"data": data[0]}
+    return data[0]      #{"data": data[0]}
 
 # endpoint para eliminar un registro SoftDelete
 @router.delete("/{id}", response_model=LogEntityRead, summary="Eliminar (soft delete) una dirección territorial")
@@ -82,5 +87,5 @@ async def delete_direcciones_territoriales(id: int, request: Request,
     for db in dbs:
         result = await DireccionTerritorialService(db).delete_direccion_territorial(id, request, tokenpayload)
         data.append(result)
-    
-    return {"data": data[0]}    
+   
+    return data[0]      #{"data": data[0]}    

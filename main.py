@@ -6,7 +6,7 @@ from scalar_fastapi import get_scalar_api_reference
 # directorios de rutas 
 from src.routes import unidad_ejecutora_route
 from src.config.config import Base, engine
-from src.routes import direccion_territorial_route
+from src.routes import direccion_territorial_route, contrato_route
 
 # # --- Crear tablas en todas las bases parametrizadas ---
 for engines in engine:
@@ -38,6 +38,7 @@ app.add_middleware(
 # Aquí se incluyen las rutas definidas en la carpeta 'routes'.
 app.include_router(unidad_ejecutora_route.router, prefix="/unidad_ejecutora", tags=["Unidad ejecutora"])
 app.include_router(direccion_territorial_route.router)
+app.include_router(contrato_route.router)
 
 #  Documentación con Swagger/OpenAPI
 app.mount("/", get_scalar_api_reference())

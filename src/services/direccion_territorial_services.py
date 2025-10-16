@@ -29,21 +29,6 @@ class DireccionTerritorialService:
         if is_active is not None:
             query = query.filter(DireccionTerritorial.activo == is_active)
         return query.first()
-    # #metodo auxiliar get para encontrar registro un campo
-    # #Ejemplo de uso 
-    # # # Buscar por nombre: get({"nombre": "Zona Norte"})
-    # # Buscar por id: get({"id": 3})
-    # def get(self, payload: dict, is_active: bool = None):      
-    #     query = self.db.query(DireccionTerritorial)
-    #     # Construye filtros dinámicos
-    #     for field, value in payload.items():
-    #         if hasattr(DireccionTerritorial, field) and value is not None:
-    #             query = query.filter(getattr(DireccionTerritorial, field) == value)
-    #     # Siempre filtra por activo
-    #     if is_active is not None:
-    #         query = query.filter(DireccionTerritorial.activo == is_active)
-
-    #     return query.first()
 
     def list_direccion_territorial(self, skip: int, limit: int):
         return self._base_query().filter(DireccionTerritorial.activo == True).offset(skip).limit(limit).all()
@@ -67,7 +52,7 @@ class DireccionTerritorialService:
         if existing:
             raise HTTPException(status_code=status.HTTP_304_NOT_MODIFIED, detail="La unidad ejecutora ya existe")
 
-        entity = DireccionTerritorial(nombre = payload.nombre,
+        entity = DireccionTerritorial(nombre = payload.nombre.strip(),
                                       region = payload.region,
                                       id_persona = tokenpayload.get("sub"),
                                       activo = True,
@@ -139,7 +124,6 @@ class DireccionTerritorialService:
         dataUpdate.nombre = payload.nombre.strip()
         dataUpdate.region = payload.region
         dataUpdate.id_persona = tokenpayload.get("sub")
-        #dataUpdate.updated_at = datetime.now(timezone.utc)
         
         try:
             self.db.add(dataUpdate)

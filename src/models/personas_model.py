@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Boolean, func,  ForeignKey, Index
+from sqlalchemy import Column, Integer, String, Index
 from sqlalchemy.orm import relationship
 from src.config.config import Base
 from src.models.audit_mixin import AuditMixin

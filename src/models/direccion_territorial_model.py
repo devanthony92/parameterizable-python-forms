@@ -1,5 +1,4 @@
-# src/models/direccion_territorial.py
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from src.config.config import Base
 from src.models.audit_mixin import AuditMixin
@@ -17,3 +16,6 @@ class DireccionTerritorial(AuditMixin, Base):
         
     #relacion con la tabla Persona
     persona = relationship("Persona", back_populates="direcciones_territoriales")
+
+    def __repr__(self):
+        return f"<DireccionTerritorial(id={self.id}, nombre='{self.nombre}', activo={self.activo})>"
