@@ -6,14 +6,16 @@ from src.config.config import get_session
 from src.services.categorizacion_carretera_services import CategorizacionService
 from src.schemas.categorizacion_carretera_schema import (CategorizacionCarreteraListResponse,
                                                          CategorizacionCarreteraCreate,
-                                                         CategorizacionCarreteraUpdate)
+                                                         CategorizacionCarreteraUpdate,
+                                                         CategorizacionCarreteraResponse,
+                                                         LogEntityRead)
 from src.utils.jwt_validator_util import verify_jwt_token
 
 # inicializacion del roter
 router = APIRouter()
 
 # endpoint de listar data con paginacion incluida
-@router.get("/", response_model=CategorizacionCarreteraListResponse)
+@router.get("/", response_model=CategorizacionCarreteraListResponse, summary="Listar categorizaciones de carretera")
 def lista(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
@@ -36,7 +38,8 @@ def lista(
     }
     
     # endpoin de crear registro
-@router.post("/")
+
+@router.post("/", response_model=CategorizacionCarreteraResponse, summary="Crear una nueva categorización de carretera")
 async def creates(request: Request, 
                         payload: CategorizacionCarreteraCreate, 
                         # de esta manera llamo todas las bases de datos existentes
@@ -53,17 +56,17 @@ async def creates(request: Request,
         result = await CategorizacionService(db).create_categorizacion(payload, request, tokenpayload)
         data.append(result)
 
-    return {"data": data[0]}
+    return data[0]
 
 
 # endpoint de show o ver registro
-@router.get("/{categorizacion_id}")
+@router.get("/{categorizacion_id}", response_model=CategorizacionCarreteraResponse, summary="Ver una categorización de carretera por ID")
 async def get_show(categorizacion_id: int, db: Session = Depends(lambda: next(get_session(0)))):
     return await CategorizacionService(db).show(categorizacion_id)
 
 
 # endpoin para actualizar un registro x
-@router.put("/{categorizacion_id}")
+@router.put("/{categorizacion_id}", response_model=CategorizacionCarreteraResponse, summary="Actualizar una categorización de carretera por ID")
 async def update(request: Request, 
                         categorizacion_id: int,
                         payload: CategorizacionCarreteraUpdate,
@@ -82,11 +85,11 @@ async def update(request: Request,
         result = await CategorizacionService(db).update_categorizacion(categorizacion_id, payload, request, tokenpayload)
         data.append(result)
     
-    return {"data": data[0]}
+    return data[0]
 
 
 # endpoint para eliminar un registro logicamente
-@router.delete("/{categorizacion_id}")
+@router.delete("/{categorizacion_id}", response_model=LogEntityRead, summary="Eliminar una categorización de carretera por ID")
 async def delete(request: Request, 
                         categorizacion_id: int, 
                         # de esta manera llamo todas las bases de datos existentes
@@ -98,4 +101,4 @@ async def delete(request: Request,
         result = await CategorizacionService(db).delete_categorizacion(categorizacion_id, request, tokenpayload)
         data.append(result)
     
-    return {"data": data[0]}
+    return data[0]

@@ -1,39 +1,50 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import List, Optional
 from datetime import datetime
+from src.models.paginacion_model import Paginacion
+from src.models.audit_mixin import AuditLogs
 
-class ClasificacionProyectoSchema(BaseModel):
+class ClasificacionProyectoBase(BaseModel):
     nombre: str
 
-class ClasificacionProyectoCreate(ClasificacionProyectoSchema):
-    pass
+class ClasificacionProyectoCreate(ClasificacionProyectoBase):
+    @field_validator("nombre")
+    def validar_nombre(cls,v):
+        if v is None or v.strip() == "":
+            raise ValueError("El campo nombre de la clasificacion se encuentra vacío; ingresa un dato válido")
+        if len(v.strip()) > 50:
+            raise ValueError("El campo nombre no puede tener un rango mayor a 50 caracteres")
+        return v
 
-class ClasificacionProyectoUpdate(ClasificacionProyectoSchema):
-    pass
+class ClasificacionProyectoUpdate(ClasificacionProyectoBase):
+    nombre: Optional[str] = None
 
-class UnidadEjecutoraResponse(ClasificacionProyectoSchema):
+    @field_validator("nombre", mode="before")
+    def validar_nombre(cls, v):
+        if v is None:
+            return v
+        if v.strip() == "":
+            raise ValueError("El campo nombre de la clasificacion se encuentra vacío; ingresa un dato válido")
+        if len(v.strip()) > 50:
+            raise ValueError("El campo nombre no puede tener un rango mayor a 50 caracteres")
+        return v
+
+class ClasificacionProyectoResponse(ClasificacionProyectoBase):
     id: int
-
-class LogEntityRead(BaseModel):
-    id: int
-    nombre: str
-    id_persona: int
-    activo: bool
     created_at: datetime
     updated_at: Optional[datetime] = None
-    deleted_at: Optional[datetime] = None
-
+    
 
     model_config = ConfigDict(from_attributes=True)
 
-class PaginacionSchema(BaseModel):
-    skip: int
-    limit: int
-    total: int
-    page: int
-    pages: int
+class LogEntityRead(AuditLogs, BaseModel):
+    id: int
+    nombre: str
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ClasificacionProyectoListResponse(BaseModel):
-    data: List[ClasificacionProyectoSchema]
-    pagination: PaginacionSchema
+    data: List[ClasificacionProyectoBase]
+    pagination: Paginacion
 

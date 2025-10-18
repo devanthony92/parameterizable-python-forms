@@ -6,14 +6,16 @@ from src.config.config import get_session
 from src.services.funcionalidad_carretera_services import FuncionalidadesCarreterService
 from src.schemas.funcionalidad_carretera_schema import (FuncionalidadCarreteraListResponse, 
                                                         FuncionalidadCarreteraCreate,
-                                                        FuncionalidadCarreteraUpdate)
+                                                        FuncionalidadCarreteraUpdate,
+                                                        FuncionalidadCarreteraResponse,
+                                                        LogEntityRead)
 from src.utils.jwt_validator_util import verify_jwt_token
 
 # inicializacion del roter
 router = APIRouter()
 
 # endpoint de listar data con paginacion incluida
-@router.get("/", response_model=FuncionalidadCarreteraListResponse)
+@router.get("/", response_model=FuncionalidadCarreteraListResponse,summary="Listar funcionalidades de carretera con paginación")
 def list_funcionalidades(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
@@ -36,7 +38,8 @@ def list_funcionalidades(
     }
     
     # endpoin de crear registro
-@router.post("/")
+
+@router.post("/", response_model=FuncionalidadCarreteraResponse, summary="Crear una nueva funcionalidad de carretera"   )
 async def create_funcionalidades(request: Request, 
                         payload: FuncionalidadCarreteraCreate, 
                         # de esta manera llamo todas las bases de datos existentes
@@ -53,17 +56,17 @@ async def create_funcionalidades(request: Request,
         result = await FuncionalidadesCarreterService(db).create_funcionalidades_carretera(payload, request, tokenpayload)
         data.append(result)
 
-    return {"data": data[0]}
+    return data[0]
 
 
 # endpoint de show o ver registro
-@router.get("/{funcionalidades_id}")
+@router.get("/{funcionalidades_id}", response_model=FuncionalidadCarreteraResponse, summary="Obtener detalles de una funcionalidad de carretera por ID" )
 async def get_show(funcionalidades_id: int, db: Session = Depends(lambda: next(get_session(0)))):
     return await FuncionalidadesCarreterService(db).show(funcionalidades_id)
 
 
 # endpoin para actualizar un registro x
-@router.put("/{funcionalidades_id}")
+@router.put("/{funcionalidades_id}", response_model=FuncionalidadCarreteraResponse, summary="Actualizar una funcionalidad de carretera existente por ID")
 async def update_unidades(request: Request, 
                         funcionalidades_id: int,
                         payload: FuncionalidadCarreteraUpdate,
@@ -82,11 +85,11 @@ async def update_unidades(request: Request,
         result = await FuncionalidadesCarreterService(db).update_funcionalidades(funcionalidades_id, payload, request, tokenpayload)
         data.append(result)
     
-    return {"data": data[0]}
+    return data[0]
 
 
 # endpoint para eliminar un registro logicamente
-@router.delete("/{funcionalidades_id}")
+@router.delete("/{funcionalidades_id}", response_model=LogEntityRead, summary="Eliminar lógicamente una funcionalidad de carretera por ID" )
 async def delete(request: Request, 
                         funcionalidades_id: int, 
                         # de esta manera llamo todas las bases de datos existentes
@@ -98,4 +101,4 @@ async def delete(request: Request,
         result = await FuncionalidadesCarreterService(db).delete_funcionalidad(funcionalidades_id, request, tokenpayload)
         data.append(result)
     
-    return {"data": data[0]}
+    return data[0]

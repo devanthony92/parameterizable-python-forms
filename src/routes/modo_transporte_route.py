@@ -6,7 +6,9 @@ from src.config.config import get_session
 from src.services.modo_transporte_services import ModoService
 from src.schemas.modo_transporte_schema import (ModoTransporteListResponse, 
                                                 ModoTransporteCreate,
-                                                ModoTransporteUpdate)
+                                                ModoTransporteUpdate,
+                                                ModoTransporteResponse,
+                                                LogEntityRead)
 from src.utils.jwt_validator_util import verify_jwt_token
 
 # inicializacion del roter
@@ -36,7 +38,8 @@ def lista(
     }
     
     # endpoin de crear registro
-@router.post("/")
+
+@router.post("/", response_model=ModoTransporteResponse,summary="Crear un nuevo modo de transporte" )
 async def creates(request: Request, 
                         payload: ModoTransporteCreate, 
                         # de esta manera llamo todas las bases de datos existentes
@@ -53,19 +56,19 @@ async def creates(request: Request,
         result = await ModoService(db).create_modo(payload, request, tokenpayload)
         data.append(result)
 
-    return {"data": data[0]}
+    return data[0]
 
 
 # endpoint de show o ver registro
-@router.get("/{modo_id}")
-async def get_show(modo_id: int, db: Session = Depends(lambda: next(get_session(0)))):
-    return await ModoService(db).show(modo_id)
+@router.get("/{id}", response_model=ModoTransporteResponse, summary="Obtener detalles de un modo de transporte por ID")
+async def get_show(id: int, db: Session = Depends(lambda: next(get_session(0)))):
+    return await ModoService(db).show(id)
 
 
 # endpoin para actualizar un registro x
-@router.put("/{modo_id}")
+@router.put("/{id}", response_model=ModoTransporteResponse, summary="Actualizar un modo de transporte existente")
 async def update(request: Request, 
-                        modo_id: int,
+                        id: int,
                         payload: ModoTransporteUpdate,
                         # de esta manera llamo todas las bases de datos existentes
                         dbs: list[Session] = Depends(lambda: next(get_session())),
@@ -79,23 +82,23 @@ async def update(request: Request,
     data = []
     
     for db in dbs:
-        result = await ModoService(db).update_modo(modo_id, payload, request, tokenpayload)
+        result = await ModoService(db).update_modo(id, payload, request, tokenpayload)
         data.append(result)
     
-    return {"data": data[0]}
+    return data[0]
 
 
 # endpoint para eliminar un registro logicamente
-@router.delete("/{modo_id}")
+@router.delete("/{id}", response_model=LogEntityRead, summary="Eliminar un modo de transporte por ID")
 async def delete(request: Request, 
-                        modo_id: int, 
+                        id: int, 
                         # de esta manera llamo todas las bases de datos existentes
                         dbs: list[Session] = Depends(lambda: next(get_session())),
                         tokenpayload: dict = Depends(verify_jwt_token)):
     
     data = []
     for db in dbs:
-        result = await ModoService(db).delete_modo(modo_id, request, tokenpayload)
+        result = await ModoService(db).delete_modo(id, request, tokenpayload)
         data.append(result)
     
-    return {"data": data[0]}
+    return data[0]

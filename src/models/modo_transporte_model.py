@@ -22,5 +22,3 @@ class ModoTransporte(AuditMixin, Base):
         Index("idx_modos_transporte_nombre", "nombre"),
     )
 
-    def __repr__(self):
-        return f"<ModoTransporte(id={self.id}, nombre='{self.nombre}', activo={self.activo})>"

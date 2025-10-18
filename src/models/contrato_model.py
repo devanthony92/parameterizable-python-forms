@@ -36,5 +36,3 @@ class Contrato(AuditMixin, Base):
         Index("idx_contratos_numero_contrato", "numero_contrato"),
         Index("idx_contratos_tipo_contrato", "tipo_contrato"),
     )
-    def __repr__(self):
-        return f"<Contrato(id={self.id}, numero='{self.numero_contrato}', tipo='{self.tipo_contrato.value}', activo={self.activo})>"

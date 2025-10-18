@@ -7,7 +7,8 @@ from src.config.config import get_session
 from src.schemas.unidad_ejecutora_schema import (
     UnidadEjecutoraCreate,
     UnidadEjecutoraListResponse,
-    UnidadEjecutoraUpdate,
+    UnidadEjecutoraUpdate, 
+    UnidadEjecutoraResponse, LogEntityRead
 )
 from src.services.unidad_ejecutora_services import UnidadEjecutoraService
 from src.utils.jwt_validator_util import verify_jwt_token
@@ -17,17 +18,19 @@ router = APIRouter()
 
 
 # endpoint de listar data con paginacion incluida
-@router.get("/", response_model=UnidadEjecutoraListResponse)
-def list_unidades(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=200),
-    # de esta manera llamo solamente la primera base de datos
-    db: Session = Depends(lambda: next(get_session(0))),
-    tokenpayload: dict = Depends(verify_jwt_token),
-) -> Dict[str, Any]:
-    data = UnidadEjecutoraService(db).list_unidad_ejecutora(skip=skip, limit=limit)
-    total = UnidadEjecutoraService(db).count_unidad_ejecutora()
-    # Método adicional para contar todos los datos
+@router.get("/", response_model=UnidadEjecutoraListResponse, summary="Listar unidades ejecutoras con paginación")
+def list_unidades(skip: int = Query(0, ge=0),
+                  limit: int = Query(50, ge=1, le=200),
+                  # de esta manera llamo solamente la primera base de datos
+                  db: Session = Depends(lambda: next(get_session(0))),
+                  tokenpayload: dict = Depends(verify_jwt_token)) -> Dict[str, Any]:
+    
+    service = UnidadEjecutoraService(db)
+    data = service.list_unidad_ejecutora(skip=skip, limit=limit)
+    # Método adicional para contar el total de los datos
+    total = service.count_unidad_ejecutora()
+
+
     return {
         "data": data,
         "pagination": {
@@ -39,17 +42,13 @@ def list_unidades(
         },
     }
 
-    # endpoin de crear registro
-
-
-@router.post("/")
-async def create_unidades(
-    request: Request,
-    payload: UnidadEjecutoraCreate,
-    # de esta manera llamo todas las bases de datos existentes
-    dbs: list[Session] = Depends(lambda: next(get_session())),
-    tokenpayload: dict = Depends(verify_jwt_token),
-):
+# endpoin de crear registro
+@router.post("/",  response_model=UnidadEjecutoraResponse, summary="Crear una nueva unidad ejecutora")
+async def create_unidades(request: Request,
+                          payload: UnidadEjecutoraCreate,
+                          # de esta manera llamo todas las bases de datos existentes
+                          dbs: list[Session] = Depends(lambda: next(get_session())),
+                          tokenpayload: dict = Depends(verify_jwt_token)):
 
     # crear registrro con uan BD y esta dependencia se agregaria asi
     # => db: Session = Depends(lambda: next(get_session(0)))
@@ -64,17 +63,17 @@ async def create_unidades(
         )
         data.append(result)
 
-    return {"data": data[0]}
+    return data[0]
 
 
 # endpoint de show o ver registro
-@router.get("/{unidad_id}")
+@router.get("/{unidad_id}", response_model=UnidadEjecutoraResponse, summary="Busca una unidad ejecutora por su ID")
 async def get_show(unidad_id: int, db: Session = Depends(lambda: next(get_session(0)))):
     return await UnidadEjecutoraService(db).show(unidad_id)
 
 
 # endpoin para actualizar un registro x
-@router.put("/{unidad_id}")
+@router.put("/{unidad_id}",  response_model=UnidadEjecutoraResponse, summary="Actualiza una unidad ejecutora")
 async def update_unidades(
     request: Request,
     unidad_id: int,
@@ -97,11 +96,11 @@ async def update_unidades(
         )
         data.append(result)
 
-    return {"data": data[0]}
+    return data[0]
 
 
 # endpoint para eliminar un registro logicamente
-@router.delete("/{unidad_id}")
+@router.delete("/{unidad_id}", response_model=LogEntityRead, summary="Elimina unidad ejecutora")
 async def delete_unidades(
     request: Request,
     unidad_id: int,
@@ -112,9 +111,9 @@ async def delete_unidades(
 
     data = []
     for db in dbs:
-        result = await UnidadEjecutoraService(db).delete_unidad(
-            unidad_id, request, tokenpayload
-        )
+        result = await UnidadEjecutoraService(db).delete_unidad(unidad_id,
+                                                                request,
+                                                                tokenpayload)
         data.append(result)
 
-    return {"data": data[0]}
+    return data[0]

@@ -15,14 +15,14 @@ class DireccionTerritorialService:
 
     def _base_query(self):
         """Base query que excluye eliminados (soft delete)."""
-        return self.db.query(DireccionTerritorial).filter(DireccionTerritorial.deleted_at.is_(None))
+        return self.db.query(DireccionTerritorial).filter(DireccionTerritorial.deleted_at.is_(None), DireccionTerritorial.activo == True)
     
     def get(self, payload: Dict[str, Any], is_active: Optional[bool] = None) -> Optional[DireccionTerritorial]:
         """
         Busca el primer registro que cumpla filtros del payload.
         payload: dict de campo:valor, e.g. {"id": 1} o {"nombre": "Zona Norte"}
         """
-        query = self._base_query()
+        query = self.db.query(DireccionTerritorial)
         for field, value in payload.items():
             if hasattr(DireccionTerritorial, field) and value is not None:
                 query = query.filter(getattr(DireccionTerritorial, field) == value)
@@ -31,25 +31,24 @@ class DireccionTerritorialService:
         return query.first()
 
     def list_direccion_territorial(self, skip: int, limit: int):
-        return self._base_query().filter(DireccionTerritorial.activo == True).offset(skip).limit(limit).all()
+        return self._base_query().offset(skip).limit(limit).all()
     
     def count_direccion_territorial(self):
-        return self._base_query().filter(DireccionTerritorial.activo == True).count()
+        return self._base_query().count()
 
     async def create_direccion_territorial(self, payload: DireccionTerritorialCreate,
                                            request: Request, tokenpayload: dict):
 
-        #validamos que no exista un registro con el misno nombre
+        #validamos que no exista un registro con el mismo nombre
         existing = self.get({"nombre" : payload.nombre})
         if existing:
-            raise HTTPException(status_code=status.HTTP_304_NOT_MODIFIED, detail="La unidad ejecutora ya existe")
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="La unidad ejecutora ya existe")
 
-        entity = DireccionTerritorial(nombre = payload.nombre.strip(),
-                                      region = payload.region,
-                                      id_persona = tokenpayload.get("sub"),
-                                      activo = True,
-                                      created_at = datetime.now(timezone.utc)) 
-
+        #crear el nuevo registro
+        entity = DireccionTerritorial(**payload.model_dump(),
+                                      id_persona=tokenpayload.get("sub"))
+        
+        # guardar en la base de datos
         try:
             self.db.add(entity)
             self.db.commit()
@@ -77,7 +76,7 @@ class DireccionTerritorialService:
                     
     async def read_direccion_territorial(self, id: int):
         if id is None:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                                 detail="El campo id de la unidad ejecutora se encuentra vacío; ingresa un dato válido")
 
         entity = self.get({"id": id}, is_active=True)
@@ -89,30 +88,29 @@ class DireccionTerritorialService:
                                            request: Request, tokenpayload: dict): 
         
         #validamos que el nombre no este previamente registrado en el sistema
-        existe = self.db.query(DireccionTerritorial).filter(
-            DireccionTerritorial.nombre == payload.nombre,
-            DireccionTerritorial.id != id,
-            DireccionTerritorial.deleted_at.is_(None)
-        ).first()
-        if existe:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail=f"El nombre '{payload.nombre}' ya está siendo usado en otra Direccion Territorial.")
+        existing = self.get({"nombre" : payload.nombre})
+        if existing:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="La unidad ejecutora ya existe")
 
-        dataUpdate = self.get({"id": id}, is_active = True)
-        if not dataUpdate:
+        #buscamos el registro que se va a actualizar
+        data = self.get({"id": id}, is_active = True)
+        if not data:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La Direccion Territorial no fue hallada")
         
-        dataOld = LogEntityRead.from_orm(dataUpdate).model_dump(mode="json")
+        dataOld = LogEntityRead.from_orm(data).model_dump(mode="json")
 
+        #actualizamos los datos
         for field, value in payload.model_dump(exclude_unset=True).items():
-            setattr(dataUpdate, field, value)
+            setattr(data, field, value)
 
-        dataUpdate.id_persona = tokenpayload.get("sub")
-        print(dataUpdate)
+        data.id_persona = tokenpayload.get("sub")
+        data.updated_at = datetime.now(timezone.utc)
+        
+        #guardamos los cambios
         try:
-            self.db.add(dataUpdate)
+            self.db.add(data)
             self.db.commit()
-            self.db.refresh(dataUpdate)
+            self.db.refresh(data)
         except Exception as e:
             self.db.rollback()
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -122,18 +120,18 @@ class DireccionTerritorialService:
         try:
             registrar_log(LogUtil(self.db),
                 tabla_afectada="direcciones_territoriales",
-                id_registro_afectado=dataUpdate.id,
+                id_registro_afectado=data.id,
                 tipo_operacion=TipoOperacionEnum.UPDATE.value,
-                datos_nuevos=LogEntityRead.from_orm(dataUpdate).model_dump(mode="json"),
+                datos_nuevos=LogEntityRead.from_orm(data).model_dump(mode="json"),
                 datos_viejos=dataOld,
-                id_persona_operacion=dataUpdate.id_persona,
+                id_persona_operacion=data.id_persona,
                 ip_origen=request.client.host,
                 user_agent=1)   #user_agent=request.headers.get("user-agent", "unknown"))
         
         except Exception:
             pass
 
-        return LogEntityRead.from_orm(dataUpdate)    
+        return LogEntityRead.from_orm(data)    
     
     async def delete_direccion_territorial(self, id: int, request: Request, tokenpayload: dict):
         dataDelete = self.get({"id": id}, is_active = True)

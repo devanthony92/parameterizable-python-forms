@@ -3,17 +3,19 @@ from sqlalchemy.orm import Session
 from typing import Dict, Any
 
 from src.config.config import get_session
-from src.services.tramo_services import TramoService
+from src.services.tramo_sector_services import TramoService
 from src.schemas.tramo_sector_schema import (TramoSectorListResponse, 
+                                             TramoSectorResponse,
                                              TramoSectorCreate,
-                                             TramoSectorUpdate)
+                                             TramoSectorUpdate,
+                                             LogEntityRead)
 from src.utils.jwt_validator_util import verify_jwt_token
 
 # inicializacion del roter
 router = APIRouter()
 
 # endpoint de listar data con paginacion incluida
-@router.get("/", response_model=TramoSectorListResponse)
+@router.get("/", response_model=TramoSectorListResponse,  summary="Listar Tramo/Sector con paginación")
 def lista(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
@@ -36,7 +38,7 @@ def lista(
     }
     
     # endpoin de crear registro
-@router.post("/")
+@router.post("/", response_model=TramoSectorResponse, summary="Crear nuevo Tramo/Sector")
 async def creates(request: Request, 
                         payload: TramoSectorCreate, 
                         # de esta manera llamo todas las bases de datos existentes
@@ -53,17 +55,17 @@ async def creates(request: Request,
         result = await TramoService(db).create_tramo(payload, request, tokenpayload)
         data.append(result)
 
-    return {"data": data[0]}
+    return data[0]
 
 
 # endpoint de show o ver registro
-@router.get("/{tramo_id}")
+@router.get("/{tramo_id}", response_model=TramoSectorResponse, summary="Buscar Tramo/Sector por ID")
 async def get_show(tramo_id: int, db: Session = Depends(lambda: next(get_session(0)))):
     return await TramoService(db).show(tramo_id)
 
 
 # endpoin para actualizar un registro x
-@router.put("/{tramo_id}")
+@router.put("/{tramo_id}", response_model=TramoSectorResponse, summary="Actualizar Tramo/Sector existente")
 async def update(request: Request, 
                         tramo_id: int,
                         payload: TramoSectorUpdate,
@@ -82,11 +84,11 @@ async def update(request: Request,
         result = await TramoService(db).update_tramo(tramo_id, payload, request, tokenpayload)
         data.append(result)
     
-    return {"data": data[0]}
+    return data[0]
 
 
 # endpoint para eliminar un registro logicamente
-@router.delete("/{tramo_id}")
+@router.delete("/{tramo_id}", response_model=LogEntityRead, summary="Eliminar Tramo/Sector soft delete")
 async def delete(request: Request, 
                         tramo_id: int, 
                         # de esta manera llamo todas las bases de datos existentes
@@ -98,4 +100,4 @@ async def delete(request: Request,
         result = await TramoService(db).delete_tramo(tramo_id, request, tokenpayload)
         data.append(result)
     
-    return {"data": data[0]}
+    return data[0]

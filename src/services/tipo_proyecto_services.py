@@ -13,10 +13,10 @@ class TipoProyectoService:
         self.db = db
 
     def _base_query(self):
-        return self.db.query(TipoProyecto).filter(TipoProyecto.deleted_at.is_(None))
+        return self.db.query(TipoProyecto).filter(TipoProyecto.deleted_at.is_(None), TipoProyecto.activo == True)
 
     def get(self, payload: Dict[str, Any], is_active: Optional[bool] = None):
-        query = self._base_query()
+        query = self.db.query(TipoProyecto)
         for field, value in payload.items():
             if hasattr(TipoProyecto, field) and value is not None:
                 query = query.filter(getattr(TipoProyecto, field) == value)
@@ -25,34 +25,21 @@ class TipoProyectoService:
         return query.first()
 
     def list_tipos_proyecto(self, skip: int, limit: int):
-        return self._base_query().filter(TipoProyecto.activo == True).offset(skip).limit(limit).all()
+        return self._base_query().offset(skip).limit(limit).all()
 
     def count_tipos_proyecto(self):
-        return self._base_query().filter(TipoProyecto.activo == True).count()
+        return self._base_query().count()
 
     async def create_tipo_proyecto(self, payload: TipoProyectoCreate, request: Request, tokenpayload: dict):
-        
-        #validamos que los datos ingresados no esten vacios
-        if not payload.nombre or payload.nombre.strip() == "":
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El nombre del tipo de proyecto no puede estar vacío")
-        if len(payload.nombre) > 50:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail="El campo nombre no puede tener un rango mayor a 50 caracteres")
-        
+
+
         #validamos que no exista un registro con el misno nombre
-        existing = self.db.query(TipoProyecto).filter(
-            TipoProyecto.nombre == payload.nombre.strip(),
-            TipoProyecto.deleted_at.is_(None)
-        ).first()
+        existing = self.get({"nombre": payload.nombre.strip()})
         if existing:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Ya existe un tipo de proyecto con ese nombre")
 
-        entity = TipoProyecto(
-            nombre=payload.nombre.strip(),
-            requiere_licencia=payload.requiere_licencia or False,
-            id_persona=tokenpayload.get("sub"),
-            activo=True,
-        )
+        entity = TipoProyecto(**payload.model_dump(),
+                                id_persona=tokenpayload.get("sub"))
 
         try:
             self.db.add(entity)
@@ -91,13 +78,9 @@ class TipoProyectoService:
         old_data = LogEntityRead.from_orm(data).model_dump(mode="json")
 
         #verificamos que el nombre no este siendo utilizado en otro tipo de proyecto
-        if payload.nombre and payload.nombre.strip() != data.nombre:
-            duplicate = self.db.query(TipoProyecto).filter(
-                TipoProyecto.nombre == payload.nombre.strip(),
-                TipoProyecto.id != id
-            ).first()
-            if duplicate:
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Ya existe otro tipo de proyecto con ese nombre")
+        existing = self.get({"nombre": payload.nombre.strip()})
+        if existing:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Ya existe un tipo de proyecto con ese nombre")
 
         #actualizamos los datos
         for field, value in payload.model_dump(exclude_unset=True).items():

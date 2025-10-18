@@ -1,23 +1,56 @@
 # src/schemas/ruta_schema.py
-from pydantic import BaseModel, ConfigDict, constr
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import List, Optional
 from datetime import datetime
-from src.models.audit_mixin import AuditMixin
+from src.models.audit_mixin import AuditLogs
+from src.models.paginacion_model import Paginacion
 
 class RutaBase(BaseModel):
-    nombre: constr(min_length=1, max_length=255)
-    codigo: Optional[constr(max_length=20)] = None
+    nombre: str
+    codigo: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
 class RutaCreate(RutaBase):
-    pass
+    @field_validator("nombre")
+    def validar_nombre(cls, v):
+        if v is None or v.strip() == "":
+            raise ValueError("El campo nombre encuentra vacío; ingresa un dato válido")
+        if len(v.strip()) > 255:
+            raise ValueError("El campo nombre no puede tener un rango mayor a 255 caracteres")
+        return v
+    @field_validator("codigo", mode="before")
+    def validar_codigo(cls, v):
+        if v is None:
+            return v
+        if v is None or v.strip() == "":
+            raise ValueError("El campo codigo encuentra vacío; ingresa un dato válido")
+        if len(v.strip()) > 20:
+            raise ValueError("El campo codigo no puede tener un rango mayor a 20 caracteres")
+        return v
 
-class RutaUpdate(BaseModel):
+class RutaUpdate(RutaBase):
     nombre: Optional[str] = None
-    codigo: Optional[str] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    @field_validator("nombre")
+    def validar_nombre(cls, v):
+        if v is None:
+            return v
+        if v is None or v.strip() == "":
+            raise ValueError("El campo nombre encuentra vacío; ingresa un dato válido")
+        if len(v.strip()) > 255:
+            raise ValueError("El campo nombre no puede tener un rango mayor a 255 caracteres")
+        return v
+    @field_validator("codigo", mode="before")
+    def validar_codigo(cls, v):
+        if v is None:
+            return v
+        if v is None or v.strip() == "":
+            raise ValueError("El campo codigo encuentra vacío; ingresa un dato válido")
+        if len(v.strip()) > 20:
+            raise ValueError("El campo codigo no puede tener un rango mayor a 20 caracteres")
+        return v
+
 
 class RutaResponse(RutaBase):
     id: int
@@ -26,20 +59,13 @@ class RutaResponse(RutaBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-class LogEntityRead(AuditMixin, BaseModel):
+class LogEntityRead(AuditLogs, BaseModel):
     id: int
     nombre: str
     codigo: Optional[str]
 
     model_config = ConfigDict(from_attributes=True)
 
-class PaginacionSchema(BaseModel):
-    skip: int
-    limit: int
-    total: int
-    page: int
-    pages: int
-
 class RutaListResponse(BaseModel):
     data: List[RutaResponse]
-    pagination: PaginacionSchema
+    pagination: Paginacion

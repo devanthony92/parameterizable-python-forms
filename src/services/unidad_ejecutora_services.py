@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import HTTPException, Request, status
 from sqlalchemy.orm import Session
@@ -32,42 +32,36 @@ class UnidadEjecutoraService:
         )
 
     # servicio para crear un registro
-    async def create_unidad(
-        self, payload: UnidadEjecutoraCreate, request: Request, tokenpayload: dict
-    ):
-        unidadcreate = (
-            self.db.query(UnidadEjecutora)
-            .filter(
-                UnidadEjecutora.nombre == payload.nombre, UnidadEjecutora.activo == True
-            )
-            .first()
-        )
+    async def create_unidad(self,
+                            payload: UnidadEjecutoraCreate,
+                            request: Request,
+                            tokenpayload: dict):
+        
+        unidadcreate = (self.db.query(UnidadEjecutora)
+                              .filter(UnidadEjecutora.nombre == payload.nombre,
+                                      UnidadEjecutora.activo == True)
+                                      .first())
+        
         if unidadcreate:
-            return HTTPException(
-                status_code=status.HTTP_304_NOT_MODIFIED,
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
                 detail="La unidad ejecutora ya existe",
             )
-        if payload.nombre == "":
-            return HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="El campo nombre de la unidad ejecutora se encuentra vacia ingresa un dato valido",
-            )
-        if len(payload.nombre) > 255:
-            return HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="El campo nombre no puede tener un rango mayor a 255 caracteres",
-            )
-
-        entity = UnidadEjecutora(
-            nombre=payload.nombre,
-            descripcion=payload.descripcion,
-            id_persona=tokenpayload.get("sub"),
-            activo=True,
-            created_at=datetime.utcnow(),
-        )
-        self.db.add(entity)
-        self.db.commit()
-        self.db.refresh(entity)
+        
+        entity = UnidadEjecutora(**payload.model_dump(),
+                                 id_persona=tokenpayload.get("sub"),
+                                 activo=True,
+                                 created_at=datetime.now(timezone.utc))
+        
+        #guardamos los datos
+        try:
+            self.db.add(entity)
+            self.db.commit()
+            self.db.refresh(entity)
+        except Exception as e:
+            self.db.rollback()
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                detail=f"Error creando el proyecto: {e}")
 
         # Registro de logs
         registrar_log(
@@ -96,80 +90,73 @@ class UnidadEjecutoraService:
                 detail="La unidad ejecutora no fue hallada",
             )
         if unidad_id == "":
-            return HTTPException(
+            raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="El campo unidad_id de la unidad ejecutora se encuentra vacia ingresa un dato valido",
             )
         return entity
 
     # servicio para editar logicamente un registro
-    async def update_unidad(
-        self,
-        unidad_id: int,
-        payload: UnidadEjecutoraCreate,
-        request: Request,
-        tokenpayload: dict,
-    ):
-        dataupdate = (
-            self.db.query(UnidadEjecutora)
-            .filter(UnidadEjecutora.id == unidad_id, UnidadEjecutora.activo == True)
-            .first()
-        )
-        if payload.nombre:
-            existe = (
-                self.db.query(UnidadEjecutora)
-                .filter(
-                    UnidadEjecutora.nombre == payload.nombre,
-                    UnidadEjecutora.id != unidad_id,
-                )
-                .first()
+    async def update_unidad(self,
+                            unidad_id: int,
+                            payload: UnidadEjecutoraCreate,
+                            request: Request,
+                            tokenpayload: dict,):
+        
+        existe = (self.db.query(UnidadEjecutora).
+                         filter(UnidadEjecutora.nombre == payload.nombre,
+                                UnidadEjecutora.id != unidad_id,
+                                ).first())
+        
+        if existe:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"El nombre '{payload.nombre}' ya está siendo usado por otra unidad ejecutora.",
             )
-            if existe:
-                return HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"El nombre '{payload.nombre}' ya está siendo usado por otra unidad ejecutora.",
-                )
+        
+        data = (self.db.query(UnidadEjecutora).
+                             filter(UnidadEjecutora.id == unidad_id,
+                                    UnidadEjecutora.activo == True).
+                                    first())
 
-        if not dataupdate:
-            return HTTPException(
+        if not data:
+            raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="La unidad ejecutora no fue hallada",
             )
-        if payload.nombre == "":
-            return HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="El campo nombre de la unidad ejecutora se encuentra vacia ingresa un dato valido",
-            )
-        if len(payload.nombre) > 255:
-            return HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="El campo nombre no puede tener un rango mayor a 255 caracteres",
-            )
 
-        datos_viejos = LogEntityRead.from_orm(dataupdate).model_dump(mode="json")
+        datos_viejos = LogEntityRead.from_orm(data).model_dump(mode="json")
 
-        if dataupdate:
-            dataupdate.nombre = payload.nombre
-            dataupdate.descripcion = payload.descripcion
-            dataupdate.id_persona = tokenpayload.get("sub")
-            dataupdate.updated_at = datetime.utcnow()
+        for field, value in payload.model_dump(exclude_unset=True).items():
+            setattr(data, field, value)
+
+            data.id_persona = tokenpayload.get("sub")
+            data.updated_at = datetime.now(timezone.utc)
+        
+        #guardamos los datos
+        try:
+            self.db.add(data)
             self.db.commit()
-            self.db.refresh(dataupdate)
+            self.db.refresh(data)
+        except Exception as e:
+            self.db.rollback()
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                detail=f"Error actualizando el proyecto: {e}")
 
             # Registro de logs
         registrar_log(
             LogUtil(self.db),
             tabla_afectada="unidad_ejecutora",
-            id_registro_afectado=dataupdate.id,
+            id_registro_afectado=data.id,
             tipo_operacion=TipoOperacionEnum.UPDATE.value,
-            datos_nuevos=LogEntityRead.from_orm(dataupdate).model_dump(mode="json"),
+            datos_nuevos=LogEntityRead.from_orm(data).model_dump(mode="json"),
             datos_viejos=datos_viejos,
-            id_persona_operacion=dataupdate.id_persona,
+            id_persona_operacion=data.id_persona,
             ip_origen=request.client.host,
             user_agent=1,
         )
 
-        return LogEntityRead.from_orm(dataupdate)
+        return LogEntityRead.from_orm(data)
 
     # servicio para eliminar logicamente un registro
     async def delete_unidad(self, unidad_id: int, request: Request, tokenpayload: dict):
@@ -179,7 +166,7 @@ class UnidadEjecutoraService:
             .first()
         )
         if not datadelete:
-            return HTTPException(
+            raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="La unidad ejecutora no fue hallada",
             )

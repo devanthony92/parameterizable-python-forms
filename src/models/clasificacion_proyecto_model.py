@@ -22,5 +22,3 @@ class ClasificacionProyecto(AuditMixin, Base):
         Index("idx_clasificaciones_proyecto_nombre", "nombre"),
     )
 
-    def __repr__(self):
-        return f"<ClasificacionProyecto(id={self.id}, nombre='{self.nombre}', activo={self.activo})>"

@@ -3,7 +3,8 @@ from typing import Optional, List
 from datetime import date, datetime
 from decimal import Decimal
 import enum
-from src.models.audit_mixin import AuditMixin
+from src.models.paginacion_model import Paginacion
+from src.models.audit_mixin import AuditLogs
 
 class TipoContratoEnum(str, enum.Enum):
     obra = "obra"
@@ -29,18 +30,17 @@ class ContratoCreate(ContratoBase):
     def campos_mayores_que_cero(cls, v, info):
         if v is None:
             return v  # No se valida si no se ingresa el campo opcional
-
-        if v <= 0:
+        if v < 0:
             raise ValueError(f"El campo '{info.field_name}' debe ser mayor que cero")
         return v
         
     @field_validator("numero_contrato")
-    def validar_numero_contrato(cls, valor, info):
-        if valor is None or valor.strip() == "":
+    def validar_numero_contrato(cls, v):
+        if v is None or v.strip() == "":
             raise ValueError("El campo 'numero_contrato' se encuentra vacío, ingresa un dato válido")
-        if len(valor.strip()) > 100:
+        if len(v.strip()) > 100:
             raise ValueError("El campo 'numero_contrato' no puede tener un rango mayor a 255 caracteres")
-        return valor
+        return v
 
 class ContratoUpdate(ContratoBase):
     numero_contrato: Optional[str] = None
@@ -50,7 +50,6 @@ class ContratoUpdate(ContratoBase):
     def campos_mayores_que_cero(cls, v, info):
         if v is None:
             return v  # No se valida si no se actualiza, el campo es opcional
-
         if v <= 0:
             raise ValueError(f"El campo '{info.field_name}' debe ser mayor que cero")
         return v
@@ -60,7 +59,7 @@ class ContratoUpdate(ContratoBase):
         if v is None:
             return v  # No se valida si no se actualiza, el campo es opcional
 
-        if v is None or v.strip() == "":
+        if v.strip() == "":
             raise ValueError("El campo 'numero_contrato' se encuentra vacío, ingresa un dato válido")
         if len(v) > 255:
             raise ValueError("El campo 'numero_contrato' no puede tener un rango mayor a 255 caracteres")
@@ -69,10 +68,10 @@ class ContratoUpdate(ContratoBase):
 class ContratoResponse(ContratoBase):
     id: int
     created_at: datetime
-    updated_at: Optional[datetime] = None
+    updated_at: Optional[datetime]
 
 
-class LogEntityRead(AuditMixin, BaseModel):
+class LogEntityRead(AuditLogs, BaseModel):
     id: int
     id_proyecto: Optional[int]
     numero_contrato: str
@@ -84,15 +83,9 @@ class LogEntityRead(AuditMixin, BaseModel):
     valor_contrato: Optional[Decimal]
     recursos_sostenibilidad: Optional[Decimal]
 
-    model_config = ConfigDict(from_attributes=True)
 
-class PaginacionSchema(BaseModel):
-    skip: int
-    limit: int
-    total: int
-    page: int
-    pages: int
+    model_config = ConfigDict(from_attributes=True)
 
 class ContratoListResponse(BaseModel):
     data: List[ContratoResponse]
-    pagination: PaginacionSchema
+    pagination: Paginacion

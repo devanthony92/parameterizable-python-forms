@@ -22,5 +22,3 @@ class TipoProyecto(AuditMixin, Base):
         Index("idx_tipos_proyecto_nombre", "nombre"),
     )
 
-    def __repr__(self):
-        return f"<TipoProyecto(id={self.id}, nombre='{self.nombre}', requiere_licencia={self.requiere_licencia}, activo={self.activo})>"

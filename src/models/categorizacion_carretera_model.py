@@ -22,5 +22,3 @@ class CategorizacionCarretera(AuditMixin, Base):
         Index("idx_categorizaciones_carreteras_nombre", "nombre"),
     )
 
-    def __repr__(self):
-        return f"<CategorizacionCarretera(id={self.id}, nombre='{self.nombre}', activo={self.activo})>"

@@ -11,4 +11,6 @@ class Municipio(AuditMixin, Base):
     nombre = Column(String(100), nullable=False, unique=True, comment="Nombre del municipio")
     codigo_dane = Column(String(8), nullable=True, comment="Código DANE del municipio")
         
-    departamento = relationship("Departamento", backref="municipios")
+    #relaciones
+    departamento = relationship("Departamento", back_populates="municipios")
+    persona = relationship("Persona", back_populates="municipios")

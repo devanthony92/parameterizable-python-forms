@@ -21,6 +21,3 @@ class FuncionalidadCarretera(AuditMixin, Base):
     __table_args__ = (
         Index("idx_funcionalidades_carreteras_nombre", "nombre"),
     )
-
-    def __repr__(self):
-        return f"<FuncionalidadCarretera(id={self.id}, nombre='{self.nombre}', activo={self.activo})>"

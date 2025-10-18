@@ -25,11 +25,11 @@ class ProfesionService:
             Profesion.nombre == payload.nombre,
                 Profesion.activo == True).first()
         if datacreate:
-            return HTTPException(status_code=status.HTTP_304_NOT_MODIFIED, detail="la profesion ya existe")
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="la profesion ya existe")
         if payload.nombre =="":
-            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El campo nombre de la profesion se encuentra vacia ingresa un dato valido")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El campo nombre de la profesion se encuentra vacia ingresa un dato valido")
         if len(payload.nombre) > 255:
-            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El campo nombre no puede tener un rango mayor a 255 caracteres")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El campo nombre no puede tener un rango mayor a 255 caracteres")
         
         entity = Profesion(nombre=payload.nombre, area_conocimiento=payload.area_conocimiento,
                         id_persona=tokenpayload.get("sub"), 
@@ -60,7 +60,7 @@ class ProfesionService:
         if not entity:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="la profesion no fue hallada")
         if profesion_id =="":
-            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                                 detail="El campo profesion_id se encuentra vacia ingresa un dato valido")
         return entity
     
@@ -78,17 +78,17 @@ class ProfesionService:
                 .first()
             )
             if existe:
-                return HTTPException(
+                raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"El nombre '{payload.nombre}' ya está siendo usado por otra profesion."
                 )
         
         if not dataupdate:
-            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="la profesion no fue hallada")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="la profesion no fue hallada")
         if payload.nombre =="":
-            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El campo nombre de la profesion se encuentra vacia ingresa un dato valido")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El campo nombre de la profesion se encuentra vacia ingresa un dato valido")
         if len(payload.nombre) > 255:
-            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El campo nombre no puede tener un rango mayor a 255 caracteres")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El campo nombre no puede tener un rango mayor a 255 caracteres")
             
         datos_viejos = LogEntityRead.from_orm(dataupdate).model_dump(mode="json")
 
@@ -120,7 +120,7 @@ class ProfesionService:
             Profesion.id == profesion_id,
                 Profesion.activo == True).first()
         if not datadelete:
-            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La Profesion no fue hallada")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La Profesion no fue hallada")
         
         datos_viejos = LogEntityRead.from_orm(datadelete).model_dump(mode="json")
     # le paso un valor false para realizar un sofdelete para un eliminado logico

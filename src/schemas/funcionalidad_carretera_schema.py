@@ -1,21 +1,36 @@
 # src/schemas/funcionalidad_carretera_schema.py
-from pydantic import BaseModel, ConfigDict, constr
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import List, Optional
 from datetime import datetime
-from src.models.audit_mixin import AuditMixin
+from src.models.audit_mixin import AuditLogs
+from src.models.paginacion_model import Paginacion
 
 class FuncionalidadCarreteraBase(BaseModel):
-    nombre: constr(min_length=1, max_length=50)
+    nombre: str
 
     model_config = ConfigDict(from_attributes=True)
 
 class FuncionalidadCarreteraCreate(FuncionalidadCarreteraBase):
-    pass
+    @field_validator("nombre")
+    def validar_nombre(cls, v):
+        if v is None or v.strip() == "":
+            raise ValueError("El campo nombre se encuentra vacío; ingresa un dato válido")
+        if len(v.strip()) > 50:
+            raise ValueError("El campo nombre no puede tener un rango mayor a 50 caracteres")
+        return v
 
 class FuncionalidadCarreteraUpdate(BaseModel):
     nombre: Optional[str] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    @field_validator("nombre", mode="before")
+    def validar_nombre(cls, v):
+        if v is None:
+            return v
+        if v.strip() == "":
+            raise ValueError("El campo nombre se encuentra vacío; ingresa un dato válido")
+        if len(v.strip()) > 50:
+            raise ValueError("El campo nombre no puede tener un rango mayor a 50 caracteres")
+        return v
 
 class FuncionalidadCarreteraResponse(FuncionalidadCarreteraBase):
     id: int
@@ -24,19 +39,13 @@ class FuncionalidadCarreteraResponse(FuncionalidadCarreteraBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-class LogEntityRead(AuditMixin, BaseModel):
+class LogEntityRead(AuditLogs, BaseModel):
     id: int
     nombre: str
 
     model_config = ConfigDict(from_attributes=True)
 
-class PaginacionSchema(BaseModel):
-    skip: int
-    limit: int
-    total: int
-    page: int
-    pages: int
 
 class FuncionalidadCarreteraListResponse(BaseModel):
     data: List[FuncionalidadCarreteraResponse]
-    pagination: PaginacionSchema
+    pagination: Paginacion

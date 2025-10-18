@@ -1,8 +1,8 @@
-from pydantic import BaseModel, ConfigDict, constr, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, List
 from datetime import date, datetime
-from src.schemas.contrato_schema import ContratoResponse
-from src.models.audit_mixin import AuditMixin
+from src.models.audit_mixin import AuditLogs
+from src.models.paginacion_model import Paginacion
 
 class ProyectoBase(BaseModel):
     id_unidad_ejecutora: Optional[int] = None
@@ -30,6 +30,8 @@ class ProyectoCreate(ProyectoBase):
         "id_funcionalidad", "id_categorizacion"
     )
     def ids_mayores_que_cero(cls, v, info):
+        if v is None:
+            return v
         if v <= 0:
             raise ValueError(f"El campo '{info.field_name}' debe ser mayor que cero")
         return v
@@ -43,6 +45,8 @@ class ProyectoUpdate(ProyectoBase):
         "id_funcionalidad", "id_categorizacion"
     )
     def ids_mayores_que_cero(cls, v, info):
+        if v is None:
+            return v
         if v <= 0:
             raise ValueError(f"El campo '{info.field_name}' debe ser mayor que cero")
         return v
@@ -51,11 +55,10 @@ class ProyectoResponse(ProyectoBase):
     id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
-    contratos: Optional[List[ContratoResponse]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
-class LogEntityRead(AuditMixin, BaseModel):
+class LogEntityRead(AuditLogs, BaseModel):
     id: int
     id_unidad_ejecutora: Optional[int]
     id_direccion_territorial: Optional[int]
@@ -74,14 +77,6 @@ class LogEntityRead(AuditMixin, BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-class PaginacionSchema(BaseModel):
-    skip: int
-    limit: int
-    total: int
-    page: int
-    pages: int
-
 class ProyectoListResponse(BaseModel):
     data: List[ProyectoResponse]
-    pagination: PaginacionSchema
+    pagination: Paginacion

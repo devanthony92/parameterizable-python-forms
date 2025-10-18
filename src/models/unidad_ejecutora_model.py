@@ -3,6 +3,9 @@ from sqlalchemy.orm import relationship
 
 from src.config.config import Base
 from src.models.audit_mixin import AuditMixin
+"""
+Modelo que representa las unidades ejecutoras relacionadas al proyecto.
+"""
 
 class UnidadEjecutora(AuditMixin, Base):
     __tablename__ = "unidades_ejecutoras"

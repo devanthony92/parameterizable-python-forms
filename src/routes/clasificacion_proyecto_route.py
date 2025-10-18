@@ -5,15 +5,17 @@ from typing import Dict, Any
 from src.config.config import get_session
 from src.services.clasificacion_services import clasificacionService
 from src.schemas.clasificacion_proyecto_schema import (ClasificacionProyectoListResponse, 
-                                                ClasificacionProyectoCreate,
-                                                ClasificacionProyectoUpdate)
+                                                       ClasificacionProyectoCreate,
+                                                       ClasificacionProyectoUpdate,
+                                                       ClasificacionProyectoResponse,
+                                                       LogEntityRead)
 from src.utils.jwt_validator_util import verify_jwt_token
 
 # inicializacion del roter
 router = APIRouter()
 
 # endpoint de listar data con paginacion incluida
-@router.get("/", response_model=ClasificacionProyectoListResponse)
+@router.get("/", response_model=ClasificacionProyectoListResponse, summary="Listar clasificaciones de proyecto")
 def list_clasificaciones(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
@@ -36,7 +38,8 @@ def list_clasificaciones(
     }
     
     # endpoin de crear registro
-@router.post("/")
+
+@router.post("/", response_model=ClasificacionProyectoResponse, summary="Crear una nueva clasificación de proyecto")
 async def create_Clasificacion(request: Request, 
                         payload: ClasificacionProyectoCreate, 
                         # de esta manera llamo todas las bases de datos existentes
@@ -53,17 +56,17 @@ async def create_Clasificacion(request: Request,
         result = await clasificacionService(db).create_clacificacion_proyecto(payload, request, tokenpayload)
         data.append(result)
 
-    return {"data": data[0]}
+    return data[0]
 
 
 # endpoint de show o ver registro
-@router.get("/{clasificacion_id}")
+@router.get("/{clasificacion_id}", response_model=ClasificacionProyectoResponse, summary="Buscar clasificación de proyecto por ID")
 async def get_show(clasificacion_id: int, db: Session = Depends(lambda: next(get_session(0)))):
     return await clasificacionService(db).show(clasificacion_id)
 
 
 # endpoin para actualizar un registro x
-@router.put("/{clasificacion_id}")
+@router.put("/{clasificacion_id}", response_model=ClasificacionProyectoResponse, summary="Actualizar una clasificación de proyecto existente")
 async def update_clasificacion(request: Request, 
                         clasificacion_id: int,
                         payload: ClasificacionProyectoUpdate,
@@ -74,19 +77,17 @@ async def update_clasificacion(request: Request,
 # crear registrro con uan BD y esta dependencia se agregaria asi 
 # => db: Session = Depends(lambda: next(get_session(0)))
     # return await UnidadEjecutoraService(db).create_unidad(payload, request, tokenpayload)
-    
-    
     data = []
     
     for db in dbs:
         result = await clasificacionService(db).update_clasificacion_pryecto(clasificacion_id, payload, request, tokenpayload)
         data.append(result)
     
-    return {"data": data[0]}
+    return data[0]
 
 
 # endpoint para eliminar un registro logicamente
-@router.delete("/{clasificacion_id}")
+@router.delete("/{clasificacion_id}", response_model=LogEntityRead, summary="eliminar (soft delete) una clasificación de proyecto")
 async def delete_clasificacion(request: Request, 
                         clasificacion_id: int, 
                         # de esta manera llamo todas las bases de datos existentes
@@ -98,4 +99,4 @@ async def delete_clasificacion(request: Request,
         result = await clasificacionService(db).delete_clasificacion(clasificacion_id, request, tokenpayload)
         data.append(result)
     
-    return {"data": data[0]}
+    return data[0]

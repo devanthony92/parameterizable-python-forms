@@ -13,7 +13,7 @@ from src.schemas.contrato_schema import (
     LogEntityRead,
 )
 
-router = APIRouter(prefix="/contratos", tags=["contratos"])
+router = APIRouter()
 
 @router.get("/", response_model=ContratoListResponse, summary="Listar contratos con paginación")
 def listar_contratos(skip: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=200),
@@ -33,7 +33,7 @@ def listar_contratos(skip: int = Query(0, ge=0), limit: int = Query(50, ge=1, le
         },
     }
 
-@router.post("/", response_model=LogEntityRead, summary="Crear nuevo contrato")
+@router.post("/", response_model=ContratoResponse, summary="Crear nuevo contrato")
 async def create_contrato(request: Request, payload: ContratoCreate,
                           dbs: list[Session] = Depends(lambda: next(get_session())), # de esta manera llamo todas las bases de datos existentes
                           tokenpayload: dict = Depends(verify_jwt_token)):
@@ -51,7 +51,7 @@ async def read_contrato(id: int, db: Session = Depends(lambda: next(get_session(
                         tokenpayload: dict = Depends(verify_jwt_token)):
     return await ContratoService(db).read_contrato(id)
 
-@router.put("/{id}", response_model=LogEntityRead, summary="Actualizar contrato")
+@router.put("/{id}", response_model=ContratoResponse, summary="Actualizar contrato")
 async def update_contrato(id: int, request: Request, payload: ContratoUpdate,
                           dbs: list[Session] = Depends(lambda: next(get_session())), # de esta manera llamo todas las bases de datos existentes
                           tokenpayload: dict = Depends(verify_jwt_token)):

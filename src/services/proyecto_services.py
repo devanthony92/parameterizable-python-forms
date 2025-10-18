@@ -13,14 +13,14 @@ class ProyectoService:
 
     def _base_query(self):
         """Base query que excluye eliminados (soft delete)."""
-        return self.db.query(Proyecto).filter(Proyecto.deleted_at.is_(None))
+        return self.db.query(Proyecto).filter(Proyecto.deleted_at.is_(None),Proyecto.activo == True)
 
     def get(self, payload: Dict[str, Any], is_active: Optional[bool] = None):
         """
         Busca el primer registro que cumpla filtros del payload.
         payload: dict de campo:valor, e.g. {"id": 1} o {"nombre": "Zona Norte"}
         """
-        query = self._base_query()
+        query = self.db.query(Proyecto)
         for field, value in payload.items():
             if hasattr(Proyecto, field) and value is not None:
                 query = query.filter(getattr(Proyecto, field) == value)
@@ -29,15 +29,14 @@ class ProyectoService:
         return query.first()
 
     def list_proyectos(self, skip: int, limit: int):
-        return self._base_query().filter(Proyecto.activo == True).offset(skip).limit(limit).all()
+        return self._base_query().offset(skip).limit(limit).all()
 
     def count_proyectos(self):
-        return self._base_query().filter(Proyecto.activo == True).count()
+        return self._base_query().count()
 
     async def create_proyecto(self, payload: ProyectoCreate, request: Request, tokenpayload: dict):
 
-        entity = Proyecto(**payload.model_dump(), id_persona=tokenpayload.get("sub"),
-                          activo=True, created_at=datetime.now(timezone.utc))
+        entity = Proyecto(**payload.model_dump(), id_persona=tokenpayload.get("sub"))
         
         #guardamos los datos
         try:
@@ -49,6 +48,7 @@ class ProyectoService:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                 detail=f"Error creando el proyecto: {e}")
 
+        # Registro de logs
         registrar_log(LogUtil(self.db),
             tabla_afectada="proyectos",
             id_registro_afectado=entity.id,
@@ -67,7 +67,6 @@ class ProyectoService:
                                 detail="El campo id de la unidad ejecutora se encuentra vacío; ingresa un dato válido")
 
         entity = self.get({"id": id}, is_active=True)
-        print(entity)
         if not entity:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                                 detail="El proyecto no fue hallado")

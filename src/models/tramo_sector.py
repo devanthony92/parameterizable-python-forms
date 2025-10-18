@@ -27,8 +27,3 @@ class TramoSector(AuditMixin, Base):
         Index("idx_tramos_sectores_id_ruta", "id_ruta"),
     )
 
-    def __repr__(self):
-        return (
-            f"<TramoSector(id={self.id}, nombre='{self.nombre}', id_ruta={self.id_ruta}, "
-            f"km_ini={self.kilometraje_inicial}, km_fin={self.kilometraje_final}, activo={self.activo})>"
-        )

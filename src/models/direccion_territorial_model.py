@@ -17,6 +17,3 @@ class DireccionTerritorial(AuditMixin, Base):
     # Relaciones ORM
     persona = relationship("Persona", back_populates="direcciones_territoriales")
     proyectos = relationship("Proyecto", back_populates="direccion_territorial")
-
-    def __repr__(self):
-        return f"<DireccionTerritorial(id={self.id}, nombre='{self.nombre}', activo={self.activo})>"

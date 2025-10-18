@@ -12,10 +12,10 @@ class ContratoService:
         self.db = db
 
     def _base_query(self):
-        return self.db.query(Contrato).filter(Contrato.deleted_at.is_(None))
+        return self.db.query(Contrato).filter(Contrato.deleted_at.is_(None), Contrato.activo == True)
 
     def get(self, payload: Dict[str, Any], is_active: Optional[bool] = None):
-        query = self._base_query()
+        query = self.db.query(Contrato)
         for field, value in payload.items():
             if hasattr(Contrato, field) and value is not None:
                 query = query.filter(getattr(Contrato, field) == value)
@@ -24,10 +24,10 @@ class ContratoService:
         return query.first()
 
     def list_contratos(self, skip: int, limit: int):
-        return self._base_query().filter(Contrato.activo == True).offset(skip).limit(limit).all()
+        return self._base_query().offset(skip).limit(limit).all()
 
     def count_contratos(self):
-        return self._base_query().filter(Contrato.activo == True).count()
+        return self._base_query().count()
 
     async def create_contrato(self, payload: ContratoCreate, request: Request, tokenpayload: dict):
 
@@ -80,15 +80,12 @@ class ContratoService:
     async def update_contrato(self, id: int, payload: ContratoUpdate, request: Request, tokenpayload: dict):
 
         #validamos que el numero del contrato no este previamente registrado en el sistema
-        existe = self.db.query(Contrato).filter(
-            Contrato.numero_contrato == payload.numero_contrato.strip(),
-            Contrato.id != id,
-            Contrato.deleted_at.is_(None)
-        ).first()
-        if existe:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail=f"El numero de contrato '{payload.numero_contrato.strip()}' ya está siendo usado")
-        
+        if payload.numero_contrato:
+            existe = self.get({"numero_contrato": payload.numero_contrato.strip()})
+            if existe:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                                    detail=f"El numero de contrato '{payload.numero_contrato.strip()}' ya está siendo usado")
+            
         data = self.get({"id": id}, is_active=True)
         if not data:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El contrato no fue hallado")
@@ -99,6 +96,7 @@ class ContratoService:
             setattr(data, field, value)
 
         data.id_persona = tokenpayload.get("sub")
+        data.updated_at = datetime.now(timezone.utc)
         
 
         try:

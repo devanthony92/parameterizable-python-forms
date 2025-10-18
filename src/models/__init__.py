@@ -9,3 +9,6 @@ from src.models.funcionalidad_carretera_model import FuncionalidadCarretera
 from src.models.clasificacion_proyecto_model import ClasificacionProyecto
 from src.models.modo_transporte_model import ModoTransporte
 from src.models.categorizacion_carretera_model import CategorizacionCarretera
+from src.models.contrato_model import Contrato
+from src.models.departamento_model import Departamento
+from src.models.municipio_model import Municipio

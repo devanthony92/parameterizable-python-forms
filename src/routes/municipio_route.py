@@ -53,7 +53,7 @@ async def creates(request: Request,
         result = await MunicipioService(db).create_municipio(payload, request, tokenpayload)
         data.append(result)
 
-    return {"data": data[0]}
+    return data[0]
 
 
 # endpoint de show o ver registro
@@ -82,7 +82,7 @@ async def update(request: Request,
         result = await MunicipioService(db).update_municipio(municipio_id, payload, request, tokenpayload)
         data.append(result)
     
-    return {"data": data[0]}
+    return data[0]
 
 
 # endpoint para eliminar un registro logicamente
@@ -98,4 +98,4 @@ async def delete(request: Request,
         result = await MunicipioService(db).delete_municipio(municipio_id, request, tokenpayload)
         data.append(result)
     
-    return {"data": data[0]}
+    return data[0]

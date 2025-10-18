@@ -32,8 +32,12 @@ class Persona(AuditMixin, Base):
     categorizaciones_carreteras = relationship("CategorizacionCarretera", back_populates="persona")
     proyectos = relationship("Proyecto", back_populates="persona")
     contratos = relationship("Contrato", back_populates="persona")
-    direcciones_territoriales = relationship("DireccionTerritorial", back_populates="persona")
-    proyectos = relationship("Proyecto", back_populates="persona")
+    profesiones = relationship("Profesion", back_populates="persona")
+    departamento = relationship("Departamento", back_populates="persona")
+    municipios = relationship("Municipio", back_populates="persona")
+    
+    
+    
 
     __table_args__ = (
         Index("idx_personas_cedula", "cedula",unique=True),

@@ -12,7 +12,7 @@ from src.schemas.proyecto_schema import (
     LogEntityRead,
 )
 
-router = APIRouter(prefix="/proyectos", tags=["proyectos"])
+router = APIRouter()
 
 
 # Listar proyectos con paginación
@@ -35,7 +35,7 @@ def listar_proyectos(skip: int = Query(0, ge=0), limit: int = Query(50, ge=1, le
     }
 
 # Crear nuevo proyecto
-@router.post("/", response_model=LogEntityRead, summary="Crear un nuevo proyecto")
+@router.post("/", response_model=ProyectoResponse, summary="Crear un nuevo proyecto")
 async def create_proyecto(request: Request, payload: ProyectoCreate,
     dbs: list[Session] = Depends(lambda: next(get_session())), # de esta manera llamo todas las bases de datos existentes
     tokenpayload: dict = Depends(verify_jwt_token)):
@@ -55,9 +55,8 @@ async def read_proyecto(id: int, db: Session = Depends(lambda: next(get_session(
                         tokenpayload: dict = Depends(verify_jwt_token)):
     return await ProyectoService(db).read_proyecto(id)
 
-
 # Actualizar proyecto existente
-@router.put("/{id}", response_model=LogEntityRead, summary="Actualizar un proyecto existente")
+@router.put("/{id}", response_model=ProyectoResponse, summary="Actualizar un proyecto existente")
 async def update_proyecto(id: int, request: Request, payload: ProyectoUpdate,
     dbs: list[Session] = Depends(lambda: next(get_session())), # de esta manera llamo todas las bases de datos existentes
     tokenpayload: dict = Depends(verify_jwt_token)):

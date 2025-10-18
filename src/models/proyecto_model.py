@@ -56,5 +56,3 @@ class Proyecto(AuditMixin, Base):
         Index("idx_proyectos_id_categorizacion", "id_categorizacion"),
         Index("idx_proyectos_id_persona", "id_persona"),
     )
-    def __repr__(self):
-        return f"<Proyecto(id={self.id}, objeto='{(self.objeto_proyecto[:30] + '...') if self.objeto_proyecto else ''}', activo={self.activo})>"

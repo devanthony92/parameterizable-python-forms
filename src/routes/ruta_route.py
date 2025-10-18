@@ -4,16 +4,20 @@ from typing import Dict, Any
 
 from src.config.config import get_session
 from src.services.ruta_services import RutaService
-from src.schemas.ruta_schema import (RutaListResponse, 
-                                     RutaCreate,
-                                     RutaUpdate)
 from src.utils.jwt_validator_util import verify_jwt_token
+from src.schemas.ruta_schema import (RutaListResponse, 
+                                     RutaResponse,
+                                     RutaCreate,
+                                     RutaUpdate,
+                                     LogEntityRead)
+
+
 
 # inicializacion del roter
 router = APIRouter()
 
 # endpoint de listar data con paginacion incluida
-@router.get("/", response_model=RutaListResponse)
+@router.get("/", response_model=RutaListResponse, summary="Listar Rutas con paginación")
 def lista(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
@@ -36,7 +40,7 @@ def lista(
     }
     
     # endpoin de crear registro
-@router.post("/")
+@router.post("/", response_model=RutaResponse, summary="Crear Rutas")
 async def creates(request: Request, 
                         payload: RutaCreate, 
                         # de esta manera llamo todas las bases de datos existentes
@@ -53,17 +57,17 @@ async def creates(request: Request,
         result = await RutaService(db).create_rutas(payload, request, tokenpayload)
         data.append(result)
 
-    return {"data": data[0]}
+    return data[0]
 
 
 # endpoint de show o ver registro
-@router.get("/{ruta_id}")
+@router.get("/{ruta_id}", response_model=RutaResponse, summary="Buscar Rutas por su ID")
 async def get_show(ruta_id: int, db: Session = Depends(lambda: next(get_session(0)))):
     return await RutaService(db).show(ruta_id)
 
 
 # endpoin para actualizar un registro x
-@router.put("/{ruta_id}")
+@router.put("/{ruta_id}", response_model=RutaResponse, summary="Actualizar Rutas existentes")
 async def update(request: Request, 
                         ruta_id: int,
                         payload: RutaUpdate,
@@ -82,11 +86,11 @@ async def update(request: Request,
         result = await RutaService(db).update_rutas(ruta_id, payload, request, tokenpayload)
         data.append(result)
     
-    return {"data": data[0]}
+    return data[0]
 
 
 # endpoint para eliminar un registro logicamente
-@router.delete("/{ruta_id}")
+@router.delete("/{ruta_id}", response_model=LogEntityRead, summary="Eliminar Rutas (soft delete)")
 async def delete(request: Request, 
                         ruta_id: int, 
                         # de esta manera llamo todas las bases de datos existentes
@@ -98,4 +102,4 @@ async def delete(request: Request,
         result = await RutaService(db).delete_ruta(ruta_id, request, tokenpayload)
         data.append(result)
     
-    return {"data": data[0]}
+    return data[0]

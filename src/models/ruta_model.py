@@ -24,6 +24,3 @@ class Ruta(AuditMixin, Base):
         Index("idx_rutas_nombre", "nombre"),
         Index("idx_rutas_codigo", "codigo"),
     )
-
-    def __repr__(self):
-        return f"<Ruta(id={self.id}, nombre='{self.nombre}', codigo='{self.codigo}', activo={self.activo})>"

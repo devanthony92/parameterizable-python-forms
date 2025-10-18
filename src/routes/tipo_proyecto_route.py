@@ -12,13 +12,14 @@ from src.schemas.tipo_proyecto_schema import (
     LogEntityRead,
 )
 
-router = APIRouter(prefix="/tipos_proyecto", tags=["tipos_proyecto"])
+router = APIRouter()
     
 
 @router.get("/", response_model=TipoProyectoListResponse, summary="Listar tipos de proyecto con paginación")
 def listar_tipos_proyecto(skip: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=200),
-                          db: Session = Depends(get_session),
+                          db: Session = Depends(lambda: next(get_session(0))),
                           tokenpayload: dict = Depends(verify_jwt_token)) -> Dict[str, Any]:
+    
     service = TipoProyectoService(db)
     data = service.list_tipos_proyecto(skip, limit)
     total = service.count_tipos_proyecto()
@@ -33,7 +34,7 @@ def listar_tipos_proyecto(skip: int = Query(0, ge=0), limit: int = Query(50, ge=
         },
     }
 
-@router.post("/", response_model=LogEntityRead, summary="Crear tipo de proyecto")
+@router.post("/", response_model=TipoProyectoResponse, summary="Crear tipo de proyecto")
 async def create_tipo_proyecto(request: Request, payload: TipoProyectoCreate,
                                dbs: list[Session] = Depends(lambda: next(get_session())), # de esta manera llamo todas las bases de datos existentes
                                tokenpayload: dict = Depends(verify_jwt_token)):
@@ -59,7 +60,7 @@ async def read_tipo_proyecto(id: int,
 
     return data[0]      #{"data": data[0]}
 
-@router.put("/{id}", response_model=LogEntityRead, summary="Actualizar tipo de proyecto")
+@router.put("/{id}", response_model=TipoProyectoResponse, summary="Actualizar tipo de proyecto")
 async def update_tipo_proyecto(id: int, request: Request, payload: TipoProyectoUpdate,
                                dbs: list[Session] = Depends(lambda: next(get_session())),
                                tokenpayload: dict = Depends(verify_jwt_token)):
